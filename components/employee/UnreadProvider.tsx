@@ -1,25 +1,14 @@
 'use client'
 
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
-import { usePathname } from 'next/navigation'
-import type { Notification } from '@/types'
+import { createContext, useContext, ReactNode } from 'react'
+import useSWR from 'swr'
+import { getMyNotifications } from '@/lib/api/employee'
 
 const UnreadContext = createContext<number>(0)
 
 export function UnreadProvider({ children }: { children: ReactNode }) {
-  const [unread, setUnread] = useState(0)
-  const pathname = usePathname()
-
-  useEffect(() => {
-    fetch('/api/notifications')
-      .then((r) => r.json())
-      .then((json: { data: Notification[] | null; error: string | null }) => {
-        if (json.data) {
-          setUnread(json.data.filter((n: Notification) => !n.is_read).length)
-        }
-      })
-      .catch(console.error)
-  }, [pathname])
+  const { data } = useSWR('myNotifications', getMyNotifications)
+  const unread = data?.filter((n) => !n.is_read).length || 0
 
   return <UnreadContext.Provider value={unread}>{children}</UnreadContext.Provider>
 }

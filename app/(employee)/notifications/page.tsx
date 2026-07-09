@@ -1,28 +1,23 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import useSWR from 'swr'
 import { Bell } from 'lucide-react'
 import EmployeeTopbar from '@/components/employee/EmployeeTopbar'
 import NotificationItem from '@/components/employee/NotificationItem'
 import EmptyState from '@/components/shared/EmptyState'
+import { getMyNotifications } from '@/lib/api/employee'
 import type { Notification } from '@/types'
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<Notification[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetch('/api/notifications')
-      .then((r) => r.json())
-      .then((json) => { if (!json.error) setNotifications(json.data ?? []) })
-      .finally(() => setLoading(false))
-  }, [])
+  const { data, isLoading: loading, mutate } = useSWR('myNotifications', getMyNotifications)
+  const notifications = data || []
 
   const unreadCount = notifications.filter((n) => !n.is_read).length
 
   const markAsRead = async (id: string) => {
-    setNotifications((prev) =>
-      prev.map((n) => n.id === id ? { ...n, is_read: true } : n)
+    mutate(
+      (prev = []) => prev.map((n) => n.id === id ? { ...n, is_read: true } : n),
+      false
     )
     await fetch('/api/notifications/read', {
       method: 'PATCH',
@@ -32,7 +27,7 @@ export default function NotificationsPage() {
   }
 
   const markAllRead = async () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, is_read: true })))
+    mutate((prev = []) => prev.map((n) => ({ ...n, is_read: true })), false)
     await fetch('/api/notifications/read', {
       method: 'PATCH',
       headers: { 'Content-Type': 'application/json' },

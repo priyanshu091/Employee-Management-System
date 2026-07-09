@@ -80,7 +80,7 @@ export default function DashboardPage() {
             <CheckInCard />
 
         {/* Stats */}
-        <div className="grid grid-cols-4 gap-3 mb-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">
           {STAT_CARDS.map((s) => (
             <div key={s.label} className="bg-white border border-[#E5E7EB] rounded-xl p-4">
               <p className="text-[22px] font-semibold text-[#111827]">{s.value}</p>
@@ -96,7 +96,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Bottom grid */}
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <AttendanceCalendar attendanceData={attendance} />
           <div className="bg-white border border-[#E5E7EB] rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">

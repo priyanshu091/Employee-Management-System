@@ -7,6 +7,7 @@ import SearchFilterBar from '@/components/admin/SearchFilterBar'
 import AdminAttendanceTable from '@/components/admin/AdminAttendanceTable'
 import { useToast } from '@/components/shared/Toast'
 import { getAdminAttendance } from '@/lib/api/admin'
+import { exportReportToExcel } from '@/lib/export/excel'
 import type { AttendanceStatus } from '@/types'
 import type { AttendanceWithProfile } from '@/types'
 
@@ -81,7 +82,14 @@ export default function AdminAttendancePage() {
           ]}
           rightSlot={
             <button
-              onClick={() => showToast('Export feature arrives in Phase 10.', 'success')}
+              onClick={() => {
+                try {
+                  exportReportToExcel('attendance', filtered, `Attendance_Export_${new Date().toISOString().split('T')[0]}`)
+                  showToast('Excel exported successfully.', 'success')
+                } catch (err) {
+                  showToast('Failed to export Excel.', 'error')
+                }
+              }}
               className="flex items-center gap-2 border border-[#E5E7EB] text-[#374151] hover:bg-[#F9FAFB] px-4 py-2 rounded-lg text-[13px] transition-colors duration-150 flex-shrink-0"
             >
               <Download size={14} strokeWidth={1.75} />

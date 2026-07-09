@@ -458,3 +458,22 @@ The user pasted a Supabase DB password, a "publishable key," and (in a follow-up
 - **Supabase Auth dashboard settings** (Site URL, redirect URL allowlist for the real production domain) still need to be set once a deploy URL exists — carried over from Phase 9A.
 - **jsPDF/SheetJS export buttons** (Reports page, Attendance export) are still placeholder toasts — real export wiring is Phase 10 per the original plan.
 - **GPS check-in will report everyone as "too far from office"** until an admin sets real `office_lat`/`office_lng` via `/admin/settings` (currently `0, 0`, the schema default) — this phase makes that page fully functional, so the user can fix this themselves now.
+
+---
+
+## Deployment — ✅ DONE (2026-07-09)
+
+- Project pushed to GitHub repository
+- Deployed to Vercel (live in production)
+- All env vars (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `NEXT_PUBLIC_APP_URL`) added to Vercel project settings
+- `NEXT_PUBLIC_APP_URL` set to the real Vercel production URL
+- Supabase Auth dashboard: Site URL + redirect URL allowlist must be updated to the production URL (requires manual action in Supabase dashboard → Authentication → Settings)
+- Resend domain verification still pending — OTP and notification emails currently only deliver to the Resend account owner's address (sandbox mode); verify a real domain in Resend dashboard to enable delivery to all employee emails
+- GPS check-in will report all employees as "too far from office" until an admin sets real `office_lat`/`office_lng` via `/admin/settings` (currently `0, 0`)
+
+### Post-Deploy Manual Checklist (User Action Required)
+- [ ] Supabase → Authentication → Settings → set Site URL to production Vercel URL
+- [ ] Supabase → Authentication → Settings → add production URL to "Redirect URLs" allowlist
+- [ ] Resend → Domains → verify your domain → update `from` address in `lib/email/send-otp.ts` and `lib/email/send-notification.ts` from `onboarding@resend.dev` to `noreply@yourdomain.com`
+- [ ] Admin → Settings page → set real office latitude + longitude
+- [ ] Investigate and remove orphan profile `EMP-003 / Test E2E User` from Supabase if it was a test artifact

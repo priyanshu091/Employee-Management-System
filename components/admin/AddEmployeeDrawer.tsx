@@ -23,11 +23,14 @@ interface DrawerFormErrors {
   joiningDate?: string
 }
 
+import type { Profile } from '@/types'
+
 interface AddEmployeeDrawerProps {
   open: boolean
   nextEmployeeId: string    // e.g. "EMP-013"
+  editTarget?: Profile | null
   onClose: () => void
-  onSubmit: (data: DrawerFormState) => Promise<boolean>
+  onSubmit: (data: DrawerFormState, isEdit: boolean, editId?: string) => Promise<boolean>
 }
 
 const EMPTY_FORM: DrawerFormState = {
@@ -42,6 +45,7 @@ function Spinner() {
 export default function AddEmployeeDrawer({
   open,
   nextEmployeeId,
+  editTarget,
   onClose,
   onSubmit,
 }: AddEmployeeDrawerProps) {
@@ -49,14 +53,25 @@ export default function AddEmployeeDrawer({
   const [errors, setErrors] = useState<DrawerFormErrors>({})
   const [loading, setLoading] = useState(false)
 
-  // Reset form when drawer opens
+  // Reset/Prefill form when drawer opens
   useEffect(() => {
     if (open) {
-      setForm(EMPTY_FORM)
+      if (editTarget) {
+        setForm({
+          fullName: editTarget.full_name || '',
+          email: editTarget.email || '',
+          phone: editTarget.phone || '',
+          department: editTarget.department || '',
+          designation: editTarget.designation || '',
+          joiningDate: editTarget.joining_date || '',
+        })
+      } else {
+        setForm(EMPTY_FORM)
+      }
       setErrors({})
       setLoading(false)
     }
-  }, [open])
+  }, [open, editTarget])
 
   // Close on Escape
   useEffect(() => {
@@ -86,7 +101,7 @@ export default function AddEmployeeDrawer({
   const handleSubmit = useCallback(async () => {
     if (!validate()) return
     setLoading(true)
-    const ok = await onSubmit(form)
+    const ok = await onSubmit(form, !!editTarget, editTarget?.id)
     setLoading(false)
     if (ok) onClose()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -116,7 +131,7 @@ export default function AddEmployeeDrawer({
       >
         {/* Header */}
         <div className="flex items-center justify-between px-5 py-4 border-b border-[#E5E7EB] flex-shrink-0">
-          <h2 className="text-[16px] font-semibold text-[#111827]">Add employee</h2>
+          <h2 className="text-[16px] font-semibold text-[#111827]">{editTarget ? 'Edit employee' : 'Add employee'}</h2>
           <button
             onClick={onClose}
             className="text-[#9CA3AF] hover:text-[#6B7280] transition-colors p-1 rounded"
@@ -146,6 +161,7 @@ export default function AddEmployeeDrawer({
               onChange={(e) => set('email', e.target.value)}
               placeholder="rahul@company.com"
               className={INPUT_CLASS}
+              disabled={!!editTarget}
             />
           </FormField>
 
@@ -201,7 +217,7 @@ export default function AddEmployeeDrawer({
             <div className="relative">
               <input
                 type="text"
-                value={nextEmployeeId}
+                value={editTarget ? editTarget.employee_id : nextEmployeeId}
                 disabled
                 className="w-full border border-[#E5E7EB] rounded-md px-3 pr-9 py-2.5 text-[13px] text-[#9CA3AF] bg-[#F9FAFB] cursor-not-allowed font-mono"
               />
@@ -229,7 +245,7 @@ export default function AddEmployeeDrawer({
             disabled={loading}
             className="flex-1 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg py-2.5 text-[13px] font-medium transition-colors duration-150 disabled:opacity-70"
           >
-            {loading ? <Spinner /> : 'Add employee'}
+            {loading ? <Spinner /> : editTarget ? 'Save changes' : 'Add employee'}
           </button>
         </div>
       </div>

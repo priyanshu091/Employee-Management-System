@@ -5,6 +5,8 @@ import StatusBadge from '@/components/shared/StatusBadge'
 import Avatar from '@/components/shared/Avatar'
 import { useToast } from '@/components/shared/Toast'
 import { type ReportRow, type ReportType } from '@/lib/mock/reports'
+import { exportReportToPDF } from '@/lib/export/pdf'
+import { exportReportToExcel } from '@/lib/export/excel'
 
 interface ReportPreviewProps {
   type: ReportType | null
@@ -179,7 +181,17 @@ export default function ReportPreview({ type, rows, label, generated }: ReportPr
   const { showToast } = useToast()
 
   const handleExport = (format: 'PDF' | 'Excel') => {
-    showToast(`${format} export available after Supabase integration.`, 'success')
+    try {
+      if (format === 'PDF') {
+        exportReportToPDF(type!, rows, label)
+      } else {
+        exportReportToExcel(type!, rows, label)
+      }
+      showToast(`${format} exported successfully.`, 'success')
+    } catch (error) {
+      console.error(error)
+      showToast(`Failed to export ${format}.`, 'error')
+    }
   }
 
   if (!generated || !type) {

@@ -12,6 +12,7 @@ const PAGE_SIZE = 10
 interface EmployeeTableProps {
   employees: Profile[]
   onStatusToggle: (id: string, newStatus: 'active' | 'inactive') => void
+  onEdit: (employee: Profile) => void
 }
 
 function formatJoiningDate(date: string | null): string {
@@ -19,7 +20,7 @@ function formatJoiningDate(date: string | null): string {
   return new Date(date).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-export default function EmployeeTable({ employees, onStatusToggle }: EmployeeTableProps) {
+export default function EmployeeTable({ employees, onStatusToggle, onEdit }: EmployeeTableProps) {
   const { showToast } = useToast()
   const [page, setPage] = useState(1)
   const [menuOpenId, setMenuOpenId] = useState<string | null>(null)
@@ -120,6 +121,15 @@ export default function EmployeeTable({ employees, onStatusToggle }: EmployeeTab
                               onClick={() => setMenuOpenId(null)}
                             />
                             <div className="absolute right-0 top-full mt-1 bg-white border border-[#E5E7EB] rounded-lg py-1 min-w-[140px] z-20">
+                              <button
+                                onClick={() => {
+                                  setMenuOpenId(null)
+                                  onEdit(emp)
+                                }}
+                                className="w-full text-left px-3 py-2 text-[13px] text-[#374151] hover:bg-[#F3F4F6] transition-colors"
+                              >
+                                Edit
+                              </button>
                               <button
                                 onClick={() => {
                                   setMenuOpenId(null)

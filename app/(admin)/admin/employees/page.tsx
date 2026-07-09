@@ -29,6 +29,7 @@ export default function AdminEmployeesPage() {
   const [dept, setDept] = useState('all')
   const [status, setStatus] = useState('all')
   const [drawerOpen, setDrawerOpen] = useState(false)
+  const [editTarget, setEditTarget] = useState<Profile | null>(null)
 
   useEffect(() => {
     getAllEmployees().then((data) => {
@@ -59,22 +60,39 @@ export default function AdminEmployeesPage() {
     department: string
     designation: string
     joiningDate: string
-  }): Promise<boolean> => {
-    const res = await createEmployee({
-      full_name: data.fullName,
-      email: data.email,
-      phone: data.phone || undefined,
-      department: data.department,
-      designation: data.designation,
-      joining_date: data.joiningDate,
-    })
-    if (res.error) {
-      showToast(res.error, 'error')
-      return false
+  }, isEdit: boolean, editId?: string): Promise<boolean> => {
+    if (isEdit && editId) {
+      const res = await updateEmployee(editId, {
+        full_name: data.fullName,
+        phone: data.phone || undefined,
+        department: data.department,
+        designation: data.designation,
+        joining_date: data.joiningDate,
+      })
+      if (res.error) {
+        showToast(res.error, 'error')
+        return false
+      }
+      setEmployees((prev) => prev.map((e) => e.id === editId ? { ...e, ...res.data } : e))
+      showToast(`${data.fullName} updated successfully.`, 'success')
+      return true
+    } else {
+      const res = await createEmployee({
+        full_name: data.fullName,
+        email: data.email,
+        phone: data.phone || undefined,
+        department: data.department,
+        designation: data.designation,
+        joining_date: data.joiningDate,
+      })
+      if (res.error) {
+        showToast(res.error, 'error')
+        return false
+      }
+      setEmployees((prev) => [res.data, ...prev])
+      showToast(`${data.fullName} added successfully.`, 'success')
+      return true
     }
-    setEmployees((prev) => [res.data, ...prev])
-    showToast(`${data.fullName} added successfully.`, 'success')
-    return true
   }, [showToast])
 
   const handleStatusToggle = useCallback(async (id: string, newStatus: 'active' | 'inactive') => {
@@ -94,7 +112,10 @@ export default function AdminEmployeesPage() {
         title="Employees"
         action={
           <button
-            onClick={() => setDrawerOpen(true)}
+            onClick={() => {
+              setEditTarget(null)
+              setDrawerOpen(true)
+            }}
             className="bg-[#4F46E5] hover:bg-[#4338CA] text-white px-4 py-2 rounded-lg text-[13px] font-medium transition-colors duration-150"
           >
             + Add employee
@@ -124,6 +145,10 @@ export default function AdminEmployeesPage() {
           <EmployeeTable
             employees={filtered}
             onStatusToggle={handleStatusToggle}
+            onEdit={(emp) => {
+              setEditTarget(emp)
+              setDrawerOpen(true)
+            }}
           />
         )}
       </main>
@@ -131,7 +156,11 @@ export default function AdminEmployeesPage() {
       <AddEmployeeDrawer
         open={drawerOpen}
         nextEmployeeId={nextId}
-        onClose={() => setDrawerOpen(false)}
+        editTarget={editTarget}
+        onClose={() => {
+          setDrawerOpen(false)
+          setEditTarget(null)
+        }}
         onSubmit={handleAdd}
       />
     </>

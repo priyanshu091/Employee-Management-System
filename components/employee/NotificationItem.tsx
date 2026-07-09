@@ -57,7 +57,24 @@ export default function NotificationItem({ notification, onClick }: Notification
         )}>
           {notification.title}
         </p>
-        <p className="text-[12px] text-[#6B7280] mt-0.5 leading-relaxed">{notification.message}</p>
+        
+        {(() => {
+          const parts = notification.message.split('was not approved. ')
+          if (parts.length > 1) {
+            return (
+              <div className="mt-1">
+                <p className="text-[12px] text-[#6B7280] leading-relaxed">{parts[0]}was not approved.</p>
+                <div className="mt-2 p-2 bg-[#FEF2F2] border border-[#FECACA] rounded-lg">
+                  <p className="text-[11px] font-semibold text-[#DC2626]">Rejection Reason:</p>
+                  <p className="text-[12px] text-[#991B1B] mt-0.5 leading-relaxed whitespace-pre-wrap">
+                    {parts[1]}
+                  </p>
+                </div>
+              </div>
+            )
+          }
+          return <p className="text-[12px] text-[#6B7280] mt-0.5 leading-relaxed">{notification.message}</p>
+        })()}
         <p className="text-[11px] text-[#9CA3AF] mt-1">{timeAgo(notification.created_at)}</p>
       </div>
 

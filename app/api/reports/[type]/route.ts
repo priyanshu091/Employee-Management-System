@@ -10,6 +10,12 @@ function formatTime(iso: string | null): string {
   })
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function getProfile(p: any) {
+  if (Array.isArray(p)) return p[0]
+  return p
+}
+
 function formatHours(hours: number | null): string {
   if (!hours) return '--'
   const h = Math.floor(hours)
@@ -65,17 +71,20 @@ export async function GET(
 
       if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
 
-      const rows = (data ?? []).map((r) => ({
-        employee_name: (r.profile as { full_name: string } | null)?.full_name ?? 'Unknown',
-        employee_id: (r.profile as { employee_id: string } | null)?.employee_id ?? '--',
-        department: (r.profile as { department: string | null } | null)?.department ?? '--',
-        date: r.date,
-        check_in: formatTime(r.check_in),
-        check_out: formatTime(r.check_out),
-        working_hours: formatHours(r.working_hours),
-        status: r.status,
-        type: r.type,
-      }))
+      const rows = (data ?? []).map((r) => {
+        const p = getProfile(r.profile)
+        return {
+          employee_name: p?.full_name ?? 'Unknown',
+          employee_id: p?.employee_id ?? '--',
+          department: p?.department ?? '--',
+          date: r.date,
+          check_in: formatTime(r.check_in),
+          check_out: formatTime(r.check_out),
+          working_hours: formatHours(r.working_hours),
+          status: r.status,
+          type: r.type,
+        }
+      })
 
       return NextResponse.json({ data: rows, error: null })
     }
@@ -110,7 +119,7 @@ export async function GET(
       }>()
 
       for (const r of data ?? []) {
-        const prof = r.profile as { full_name: string; employee_id: string; department: string | null } | null
+        const prof = getProfile(r.profile)
         if (!prof) continue
         if (department && department !== 'All Departments' && prof.department !== department) continue
 
@@ -171,17 +180,20 @@ export async function GET(
 
       if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
 
-      const rows = (data ?? []).map((r) => ({
-        employee_name: (r.profile as { full_name: string } | null)?.full_name ?? 'Unknown',
-        employee_id: (r.profile as { employee_id: string } | null)?.employee_id ?? '--',
-        department: (r.profile as { department: string | null } | null)?.department ?? '--',
-        date: r.date,
-        check_in: formatTime(r.check_in),
-        check_out: formatTime(r.check_out),
-        working_hours: formatHours(r.working_hours),
-        status: r.status,
-        type: r.type,
-      }))
+      const rows = (data ?? []).map((r) => {
+        const p = getProfile(r.profile)
+        return {
+          employee_name: p?.full_name ?? 'Unknown',
+          employee_id: p?.employee_id ?? '--',
+          department: p?.department ?? '--',
+          date: r.date,
+          check_in: formatTime(r.check_in),
+          check_out: formatTime(r.check_out),
+          working_hours: formatHours(r.working_hours),
+          status: r.status,
+          type: r.type,
+        }
+      })
 
       return NextResponse.json({ data: rows, error: null })
     }
@@ -213,16 +225,19 @@ export async function GET(
       const { data, error } = await query
       if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
 
-      const rows = (data ?? []).map((r) => ({
-        employee_name: (r.profile as { full_name: string } | null)?.full_name ?? 'Unknown',
-        employee_id: (r.profile as { employee_id: string } | null)?.employee_id ?? '--',
-        leave_type: r.leave_type,
-        start_date: r.start_date,
-        end_date: r.end_date,
-        days: daysBetween(r.start_date, r.end_date),
-        reason: r.reason,
-        status: r.status,
-      }))
+      const rows = (data ?? []).map((r) => {
+        const p = getProfile(r.profile)
+        return {
+          employee_name: p?.full_name ?? 'Unknown',
+          employee_id: p?.employee_id ?? '--',
+          leave_type: r.leave_type,
+          start_date: r.start_date,
+          end_date: r.end_date,
+          days: daysBetween(r.start_date, r.end_date),
+          reason: r.reason,
+          status: r.status,
+        }
+      })
 
       return NextResponse.json({ data: rows, error: null })
     }
@@ -254,13 +269,16 @@ export async function GET(
       const { data, error } = await query
       if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
 
-      const rows = (data ?? []).map((r) => ({
-        employee_name: (r.profile as { full_name: string } | null)?.full_name ?? 'Unknown',
-        employee_id: (r.profile as { employee_id: string } | null)?.employee_id ?? '--',
-        date: r.date,
-        reason: r.reason,
-        status: r.status,
-      }))
+      const rows = (data ?? []).map((r) => {
+        const p = getProfile(r.profile)
+        return {
+          employee_name: p?.full_name ?? 'Unknown',
+          employee_id: p?.employee_id ?? '--',
+          date: r.date,
+          reason: r.reason,
+          status: r.status,
+        }
+      })
 
       return NextResponse.json({ data: rows, error: null })
     }
@@ -286,20 +304,23 @@ export async function GET(
 
       const rows = (data ?? [])
         .filter((r) => {
-          const prof = r.profile as { department: string | null } | null
+          const prof = getProfile(r.profile)
           if (department && department !== 'All Departments') {
             return prof?.department === department
           }
           return true
         })
-        .map((r) => ({
-          employee_name: (r.profile as { full_name: string } | null)?.full_name ?? 'Unknown',
-          employee_id: (r.profile as { employee_id: string } | null)?.employee_id ?? '--',
-          department: (r.profile as { department: string | null } | null)?.department ?? '--',
-          date: r.date,
-          check_in: formatTime(r.check_in),
-          late_reason: r.late_reason ?? '--',
-        }))
+        .map((r) => {
+          const p = getProfile(r.profile)
+          return {
+            employee_name: p?.full_name ?? 'Unknown',
+            employee_id: p?.employee_id ?? '--',
+            department: p?.department ?? '--',
+            date: r.date,
+            check_in: formatTime(r.check_in),
+            late_reason: r.late_reason ?? '--',
+          }
+        })
 
       return NextResponse.json({ data: rows, error: null })
     }

@@ -45,6 +45,7 @@ export async function PATCH(
         status: action,
         reviewed_by: user.id,
         reviewed_at: new Date().toISOString(),
+        ...(action === 'rejected' && reason ? { reason: req.reason + '. Admin rejection reason: ' + reason } : {})
       })
       .eq('id', id)
       .select()

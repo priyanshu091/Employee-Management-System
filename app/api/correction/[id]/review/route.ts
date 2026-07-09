@@ -41,7 +41,12 @@ export async function PATCH(
 
     const { data, error } = await adminClient
       .from('correction_requests')
-      .update({ status: action, reviewed_by: user.id, reviewed_at: new Date().toISOString() })
+      .update({ 
+        status: action, 
+        reviewed_by: user.id, 
+        reviewed_at: new Date().toISOString(),
+        ...(action === 'rejected' && reason ? { reason: req.reason + '. Admin rejection reason: ' + reason } : {})
+      })
       .eq('id', id)
       .select().maybeSingle()
 

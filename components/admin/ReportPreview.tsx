@@ -219,6 +219,13 @@ export default function ReportPreview({ type, rows, label, generated }: ReportPr
       } else {
         exportReportToExcel(type!, rows, label)
       }
+
+      fetch('/api/audit/export', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type, format, label }),
+      }).catch(console.error)
+
       showToast(`${format} exported successfully.`, 'success')
     } catch (error) {
       console.error(error)

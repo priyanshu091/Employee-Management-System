@@ -33,7 +33,7 @@ export async function PATCH(
 
     const { data: req } = await adminClient
       .from('correction_requests')
-      .select('*, profiles(full_name, email)')
+      .select('*, profile:profiles!correction_requests_employee_id_fkey(full_name, email)')
       .eq('id', id)
       .maybeSingle()
 
@@ -124,7 +124,7 @@ export async function PATCH(
     })
 
     await sendNotificationEmail(
-      req.profiles.email,
+      req.profile.email,
       isApproved ? 'Correction Approved' : 'Correction Rejected',
       isApproved ? 'Attendance Correction Approved' : 'Attendance Correction Rejected',
       isApproved

@@ -31,7 +31,7 @@ export async function PATCH(
 
     const { data: req } = await adminClient
       .from('wfh_requests')
-      .select('*, profiles(full_name, email)')
+      .select('*, profile:profiles!wfh_requests_employee_id_fkey(full_name, email)')
       .eq('id', id)
       .maybeSingle()
 
@@ -70,7 +70,7 @@ export async function PATCH(
     })
 
     await sendNotificationEmail(
-      req.profiles.email,
+      req.profile.email,
       isApproved ? 'WFH Request Approved' : 'WFH Request Rejected',
       isApproved ? 'WFH Request Approved' : 'WFH Request Rejected',
       isApproved ? `Your WFH for ${req.date} is approved.` : `Your WFH for ${req.date} was not approved.`

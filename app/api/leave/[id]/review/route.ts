@@ -33,7 +33,7 @@ export async function PATCH(
 
     const { data: req } = await adminClient
       .from('leave_requests')
-      .select('*, profiles(full_name, email)')
+      .select('*, profile:profiles!leave_requests_employee_id_fkey(full_name, email)')
       .eq('id', id)
       .maybeSingle()
 
@@ -96,7 +96,7 @@ export async function PATCH(
     })
 
     await sendNotificationEmail(
-      req.profiles.email,
+      req.profile.email,
       isApproved ? 'Leave Request Approved' : 'Leave Request Rejected',
       isApproved ? 'Leave Request Approved' : 'Leave Request Rejected',
       isApproved

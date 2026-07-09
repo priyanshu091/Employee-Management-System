@@ -66,7 +66,7 @@ export default function LeavePage() {
 
   return (
     <>
-      <EmployeeTopbar title="Leave" unreadCount={3} />
+      <EmployeeTopbar title="Leave" />
       <main className="flex-1 p-5">
         <PageHeader
           title="Leave Requests"

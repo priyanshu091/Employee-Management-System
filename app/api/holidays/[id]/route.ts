@@ -12,8 +12,9 @@ export async function DELETE(
     if (!user) return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
 
     const { data: caller } = await supabase
-      .from('profiles').select('role').eq('id', user.id).single()
-    if (caller?.role !== 'admin') return NextResponse.json({ data: null, error: 'Forbidden' }, { status: 403 })
+      .from('profiles').select('role').eq('id', user.id).maybeSingle()
+    if (!caller) return NextResponse.json({ data: null, error: 'Profile not found' }, { status: 404 })
+    if (caller.role !== 'admin') return NextResponse.json({ data: null, error: 'Forbidden' }, { status: 403 })
 
     const { error } = await supabase.from('holidays').delete().eq('id', id)
     if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })

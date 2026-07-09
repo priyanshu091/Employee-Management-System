@@ -9,8 +9,9 @@ export async function GET(request: NextRequest) {
     if (!user) return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
 
     const { data: caller } = await supabase
-      .from('profiles').select('role').eq('id', user.id).single()
-    if (caller?.role !== 'admin') return NextResponse.json({ data: null, error: 'Forbidden' }, { status: 403 })
+      .from('profiles').select('role').eq('id', user.id).maybeSingle()
+    if (!caller) return NextResponse.json({ data: null, error: 'Profile not found' }, { status: 404 })
+    if (caller.role !== 'admin') return NextResponse.json({ data: null, error: 'Forbidden' }, { status: 403 })
 
     const url = new URL(request.url)
     const emp = url.searchParams.get('employee')

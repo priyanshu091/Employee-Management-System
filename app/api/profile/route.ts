@@ -14,8 +14,9 @@ export async function GET() {
       .from('profiles')
       .select('*')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
 
+    if (!data) return NextResponse.json({ data: null, error: 'Profile not found.' }, { status: 404 })
     if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
     return NextResponse.json({ data, error: null })
   } catch {
@@ -42,8 +43,9 @@ export async function PATCH(request: NextRequest) {
       .update({ ...safe, updated_at: new Date().toISOString() })
       .eq('id', user.id)
       .select()
-      .single()
+      .maybeSingle()
 
+    if (!data) return NextResponse.json({ data: null, error: 'Profile not found.' }, { status: 404 })
     if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
     return NextResponse.json({ data, error: null })
   } catch {

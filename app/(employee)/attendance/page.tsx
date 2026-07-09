@@ -40,7 +40,7 @@ export default function AttendancePage() {
 
   return (
     <>
-      <EmployeeTopbar title="Attendance" unreadCount={3} />
+      <EmployeeTopbar title="Attendance" />
 
       <main className="flex-1 p-5">
         {/* Filter bar */}

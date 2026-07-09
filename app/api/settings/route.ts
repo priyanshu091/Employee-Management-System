@@ -14,7 +14,8 @@ export async function GET() {
     if (!user) return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
 
     const { data, error } = await supabase
-      .from('company_settings').select('*').single()
+      .from('company_settings').select('*').maybeSingle()
+    if (!data) return NextResponse.json({ data: null, error: 'Settings not initialized' }, { status: 404 })
     if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
     return NextResponse.json({ data, error: null })
   } catch {
@@ -29,13 +30,14 @@ export async function PATCH(request: NextRequest) {
     if (!user) return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
 
     const { data: caller } = await supabase
-      .from('profiles').select('role').eq('id', user.id).single()
-    if (caller?.role !== 'admin') return NextResponse.json({ data: null, error: 'Forbidden' }, { status: 403 })
+      .from('profiles').select('role').eq('id', user.id).maybeSingle()
+    if (!caller) return NextResponse.json({ data: null, error: 'Profile not found' }, { status: 404 })
+    if (caller.role !== 'admin') return NextResponse.json({ data: null, error: 'Forbidden' }, { status: 403 })
 
     const body = await request.json()
 
     const { data: existing } = await supabase
-      .from('company_settings').select('id').single()
+      .from('company_settings').select('id').maybeSingle()
 
     if (!existing) {
       return NextResponse.json({ data: null, error: 'Settings row not found.' }, { status: 404 })
@@ -50,7 +52,7 @@ export async function PATCH(request: NextRequest) {
       .from('company_settings')
       .update({ ...safe, updated_at: new Date().toISOString() })
       .eq('id', existing.id)
-      .select().single()
+      .select().maybeSingle()
 
     if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
     return NextResponse.json({ data, error: null })

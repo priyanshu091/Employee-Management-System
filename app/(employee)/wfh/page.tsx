@@ -46,7 +46,7 @@ export default function WFHPage() {
 
   return (
     <>
-      <EmployeeTopbar title="Work from Home" unreadCount={3} />
+      <EmployeeTopbar title="Work from Home" />
       <main className="flex-1 p-5">
         <PageHeader
           title="Work from Home"

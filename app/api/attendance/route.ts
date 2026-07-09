@@ -9,7 +9,9 @@ export async function GET(request: NextRequest) {
     if (authError || !user) return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
 
     const { data: caller } = await supabase
-      .from('profiles').select('role').eq('id', user.id).single()
+      .from('profiles').select('role').eq('id', user.id).maybeSingle()
+
+    if (!caller) return NextResponse.json({ data: null, error: 'Profile not found' }, { status: 404 })
 
     const url = new URL(request.url)
     const month = url.searchParams.get('month')
@@ -52,7 +54,9 @@ export async function PATCH(request: NextRequest) {
     if (authError || !user) return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
 
     const { data: caller } = await supabase
-      .from('profiles').select('role').eq('id', user.id).single()
+      .from('profiles').select('role').eq('id', user.id).maybeSingle()
+
+    if (!caller) return NextResponse.json({ data: null, error: 'Profile not found' }, { status: 404 })
     if (caller?.role !== 'admin') {
       return NextResponse.json({ data: null, error: 'Forbidden' }, { status: 403 })
     }
@@ -64,7 +68,7 @@ export async function PATCH(request: NextRequest) {
     }
 
     const { data: current } = await supabase
-      .from('attendance').select('*').eq('id', id).single()
+      .from('attendance').select('*').eq('id', id).maybeSingle()
 
     if (!current) {
       return NextResponse.json({ data: null, error: 'Record not found.' }, { status: 404 })

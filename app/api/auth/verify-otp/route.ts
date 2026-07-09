@@ -131,13 +131,28 @@ export async function POST(request: NextRequest) {
     }
 
     // Get profile + role for the redirect decision
-    const { data: profile } = await adminClient
+    const { data: profile, error: profileError } = await adminClient
       .from('profiles')
       .select('role')
       .eq('id', userId)
-      .single()
+      .maybeSingle()
 
-    const role = profile?.role ?? 'employee'
+    if (profileError) {
+      console.error('[verify-otp] profile fetch failed', profileError)
+      return NextResponse.json(
+        { data: null, error: 'Failed to retrieve profile.' },
+        { status: 500 }
+      )
+    }
+
+    if (!profile) {
+      return NextResponse.json(
+        { data: null, error: 'Profile not found.' },
+        { status: 404 }
+      )
+    }
+
+    const role = profile.role ?? 'employee'
 
     response.cookies.delete('_otp_pending')
 

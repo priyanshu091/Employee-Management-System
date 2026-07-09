@@ -25,7 +25,7 @@ export function useSession(): SessionState {
         .from('profiles')
         .select('*')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
       setProfile(data ?? null)
       setLoading(false)

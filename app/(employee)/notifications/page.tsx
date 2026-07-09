@@ -42,7 +42,7 @@ export default function NotificationsPage() {
 
   return (
     <>
-      <EmployeeTopbar title="Notifications" unreadCount={unreadCount} />
+      <EmployeeTopbar title="Notifications" />
 
       <main className="flex-1 p-5">
         {/* Header row */}

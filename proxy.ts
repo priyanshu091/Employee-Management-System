@@ -50,7 +50,13 @@ export async function proxy(request: NextRequest) {
     .from('profiles')
     .select('role, status')
     .eq('id', user.id)
-    .single()
+    .maybeSingle()
+
+  if (!profile) {
+    const loginUrl = new URL('/auth/login', request.url)
+    loginUrl.searchParams.set('error', 'no_profile')
+    return NextResponse.redirect(loginUrl)
+  }
 
   // Inactive account
   if (profile?.status === 'inactive') {

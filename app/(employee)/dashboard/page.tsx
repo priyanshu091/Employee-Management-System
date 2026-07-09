@@ -13,7 +13,6 @@ import {
   getMyLeaveRequests,
   getMyWFHRequests,
   getAttendanceHistory,
-  getMyNotifications,
 } from '@/lib/api/employee'
 import type { Profile, LeaveRequest, WFHRequest, Attendance } from '@/types'
 
@@ -23,7 +22,6 @@ export default function DashboardPage() {
   const [leaveReqs, setLeaveReqs] = useState<LeaveRequest[]>([])
   const [wfhReqs, setWFHReqs] = useState<WFHRequest[]>([])
   const [attendance, setAttendance] = useState<Attendance[]>([])
-  const [unreadCount, setUnreadCount] = useState(0)
 
   useEffect(() => {
     Promise.all([
@@ -32,14 +30,12 @@ export default function DashboardPage() {
       getMyLeaveRequests(),
       getMyWFHRequests(),
       getAttendanceHistory(new Date().getFullYear(), new Date().getMonth()),
-      getMyNotifications(),
-    ]).then(([prof, s, leave, wfh, att, notifs]) => {
+    ]).then(([prof, s, leave, wfh, att]) => {
       setProfile(prof)
       setStats(s)
       setLeaveReqs(leave)
       setWFHReqs(wfh)
       setAttendance(att)
-      setUnreadCount(notifs.filter((n) => !n.is_read).length)
     })
   }, [])
 
@@ -71,7 +67,7 @@ export default function DashboardPage() {
 
   return (
     <>
-      <EmployeeTopbar title={`${greeting}, ${name}`} unreadCount={unreadCount} />
+      <EmployeeTopbar title={`${greeting}, ${name}`} />
 
       <main className="flex-1 p-5">
         <CheckInCard />

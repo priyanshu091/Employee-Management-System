@@ -64,7 +64,7 @@ export default function CorrectionPage() {
 
   return (
     <>
-      <EmployeeTopbar title="Corrections" unreadCount={3} />
+      <EmployeeTopbar title="Corrections" />
       <main className="flex-1 p-5">
         <PageHeader
           title="Attendance Corrections"

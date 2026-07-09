@@ -3,6 +3,13 @@ export function calcWorkingHours(checkIn: string, checkOut: string): number {
   return Math.round((ms / 1000 / 60 / 60) * 100) / 100
 }
 
+export function getTodayIST(): string {
+  const now = new Date()
+  const istOffset = 5.5 * 60 * 60 * 1000
+  const istDate = new Date(now.getTime() + istOffset)
+  return istDate.toISOString().split('T')[0]
+}
+
 export function isLate(
   checkInTime: Date,
   officeStart: string,

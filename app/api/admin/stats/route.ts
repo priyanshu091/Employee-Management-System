@@ -13,9 +13,13 @@ export async function GET() {
       .from('profiles')
       .select('role')
       .eq('id', user.id)
-      .single()
+      .maybeSingle()
 
-    if (profile?.role !== 'admin') {
+    if (!profile) {
+      return NextResponse.json({ data: null, error: 'Profile not found' }, { status: 404 })
+    }
+
+    if (profile.role !== 'admin') {
       return NextResponse.json({ data: null, error: 'Forbidden' }, { status: 403 })
     }
 

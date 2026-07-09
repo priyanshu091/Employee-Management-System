@@ -17,8 +17,9 @@ export async function PATCH(
     if (authError || !user) return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
 
     const { data: caller } = await supabase
-      .from('profiles').select('role').eq('id', user.id).single()
-    if (caller?.role !== 'admin') {
+      .from('profiles').select('role').eq('id', user.id).maybeSingle()
+    if (!caller) return NextResponse.json({ data: null, error: 'Profile not found' }, { status: 404 })
+    if (caller.role !== 'admin') {
       return NextResponse.json({ data: null, error: 'Forbidden' }, { status: 403 })
     }
 
@@ -34,7 +35,7 @@ export async function PATCH(
       .update({ ...safe, updated_at: new Date().toISOString() })
       .eq('id', id)
       .select()
-      .single()
+      .maybeSingle()
 
     if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
     return NextResponse.json({ data, error: null })

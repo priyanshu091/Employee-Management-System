@@ -15,8 +15,9 @@ export async function PATCH(
     if (authError || !user) return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
 
     const { data: caller } = await supabase
-      .from('profiles').select('role').eq('id', user.id).single()
-    if (caller?.role !== 'admin') return NextResponse.json({ data: null, error: 'Forbidden' }, { status: 403 })
+      .from('profiles').select('role').eq('id', user.id).maybeSingle()
+    if (!caller) return NextResponse.json({ data: null, error: 'Profile not found' }, { status: 404 })
+    if (caller.role !== 'admin') return NextResponse.json({ data: null, error: 'Forbidden' }, { status: 403 })
 
     const { action, reason } = await request.json()
     if (!['approved', 'rejected'].includes(action)) {
@@ -32,7 +33,7 @@ export async function PATCH(
       .from('wfh_requests')
       .select('*, profiles(full_name, email)')
       .eq('id', id)
-      .single()
+      .maybeSingle()
 
     if (!req) return NextResponse.json({ data: null, error: 'Request not found.' }, { status: 404 })
 
@@ -40,17 +41,22 @@ export async function PATCH(
       .from('wfh_requests')
       .update({ status: action, reviewed_by: user.id, reviewed_at: new Date().toISOString() })
       .eq('id', id)
-      .select().single()
+      .select().maybeSingle()
 
     if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
 
     if (action === 'approved') {
-      await adminClient.from('attendance').upsert({
+      const { error: mutationError } = await adminClient.from('attendance').upsert({
         employee_id: req.employee_id,
         date: req.date,
         type: 'wfh',
         status: 'wfh',
       }, { onConflict: 'employee_id,date' })
+
+      if (mutationError) {
+        console.error('[wfh review] mutation failed:', mutationError)
+        return NextResponse.json({ data: null, error: mutationError.message }, { status: 500 })
+      }
     }
 
     const isApproved = action === 'approved'

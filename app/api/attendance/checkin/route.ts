@@ -1,13 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { isLate } from '@/lib/utils/time'
+import { isLate, getTodayIST } from '@/lib/utils/time'
 
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
+
     const { data: { user }, error: authError } = await supabase.auth.getUser()
     if (authError || !user) {
       return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, role')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (profileError || !profile) {
+      return NextResponse.json({ data: null, error: 'Profile not found' }, { status: 404 })
     }
 
     const { type, late_reason } = await request.json()
@@ -16,15 +27,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ data: null, error: 'Invalid type.' }, { status: 400 })
     }
 
-    const today = new Date().toISOString().split('T')[0]
+    const today = getTodayIST()
 
     // Check duplicate
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from('attendance')
       .select('id')
-      .eq('employee_id', user.id)
+      .eq('employee_id', profile.id)
       .eq('date', today)
       .maybeSingle()
+
+    if (existingError) {
+      console.error('[POST /api/attendance/checkin] Fetch existing error:', existingError)
+      return NextResponse.json({ data: null, error: existingError.message }, { status: 500 })
+    }
 
     if (existing) {
       return NextResponse.json(
@@ -34,10 +50,14 @@ export async function POST(request: NextRequest) {
     }
 
     // Get company settings for late check
-    const { data: settings } = await supabase
+    const { data: settings, error: settingsError } = await supabase
       .from('company_settings')
       .select('office_start_time, grace_period_minutes, attendance_lock_time')
-      .single()
+      .maybeSingle()
+
+    if (settingsError) {
+      console.error('[POST /api/attendance/checkin] Settings error:', settingsError)
+    }
 
     const now = new Date()
 
@@ -63,10 +83,10 @@ export async function POST(request: NextRequest) {
     }
 
     // Insert attendance record
-    const { data, error } = await supabase
+    const { data, error: insertError } = await supabase
       .from('attendance')
       .insert({
-        employee_id: user.id,
+        employee_id: profile.id,
         date: today,
         check_in: now.toISOString(),
         type,
@@ -74,15 +94,23 @@ export async function POST(request: NextRequest) {
         late_reason: late_reason || null,
       })
       .select()
-      .single()
+      .maybeSingle()
 
-    if (error) {
-      return NextResponse.json({ data: null, error: error.message }, { status: 500 })
+    if (insertError) {
+      console.error('[POST /api/attendance/checkin] Insert error:', insertError)
+      return NextResponse.json({ data: null, error: insertError.message }, { status: 500 })
+    }
+
+    if (!data) {
+      return NextResponse.json(
+        { data: null, error: 'Failed to create attendance record.' },
+        { status: 500 }
+      )
     }
 
     return NextResponse.json({ data, error: null }, { status: 201 })
   } catch (err) {
-    console.error('[checkin]', err)
+    console.error('[POST /api/attendance/checkin] Unexpected error:', err)
     return NextResponse.json({ data: null, error: 'Internal server error' }, { status: 500 })
   }
 }

@@ -17,8 +17,9 @@ export async function PATCH(
     if (authError || !user) return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
 
     const { data: caller } = await supabase
-      .from('profiles').select('role').eq('id', user.id).single()
-    if (caller?.role !== 'admin') return NextResponse.json({ data: null, error: 'Forbidden' }, { status: 403 })
+      .from('profiles').select('role').eq('id', user.id).maybeSingle()
+    if (!caller) return NextResponse.json({ data: null, error: 'Profile not found' }, { status: 404 })
+    if (caller.role !== 'admin') return NextResponse.json({ data: null, error: 'Forbidden' }, { status: 403 })
 
     const { action, reason } = await request.json()
     if (!['approved', 'rejected'].includes(action)) {
@@ -34,7 +35,7 @@ export async function PATCH(
       .from('correction_requests')
       .select('*, profiles(full_name, email)')
       .eq('id', id)
-      .single()
+      .maybeSingle()
 
     if (!req) return NextResponse.json({ data: null, error: 'Request not found.' }, { status: 404 })
 
@@ -42,7 +43,7 @@ export async function PATCH(
       .from('correction_requests')
       .update({ status: action, reviewed_by: user.id, reviewed_at: new Date().toISOString() })
       .eq('id', id)
-      .select().single()
+      .select().maybeSingle()
 
     if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
 
@@ -58,15 +59,22 @@ export async function PATCH(
       if (req.requested_check_in) updates.check_in = `${req.date}T${req.requested_check_in}`
       if (req.requested_check_out) updates.check_out = `${req.date}T${req.requested_check_out}`
 
-      if (updates.check_in && updates.check_out) {
+      const effectiveCheckIn = updates.check_in ?? existing?.check_in
+      const effectiveCheckOut = updates.check_out ?? existing?.check_out
+
+      if (effectiveCheckIn && effectiveCheckOut) {
         updates.working_hours = calcWorkingHours(
-          updates.check_in as string,
-          updates.check_out as string
+          effectiveCheckIn as string,
+          effectiveCheckOut as string
         )
       }
 
       if (existing) {
-        await adminClient.from('attendance').update(updates).eq('id', existing.id)
+        const { error: mutationError } = await adminClient.from('attendance').update(updates).eq('id', existing.id)
+        if (mutationError) {
+          console.error('[context] mutation failed:', mutationError)
+          return NextResponse.json({ data: null, error: mutationError.message }, { status: 500 })
+        }
 
         await writeAuditLog({
           targetType: 'attendance',
@@ -78,13 +86,18 @@ export async function PATCH(
           reason: `Correction request approved: ${req.reason}`,
         })
       } else {
-        const { data: created } = await adminClient.from('attendance').insert({
+        const { data: created, error: mutationError } = await adminClient.from('attendance').insert({
           employee_id: req.employee_id,
           date: req.date,
           type: 'office',
           status: 'present',
           ...updates,
-        }).select().single()
+        }).select().maybeSingle()
+
+        if (mutationError) {
+          console.error('[context] mutation failed:', mutationError)
+          return NextResponse.json({ data: null, error: mutationError.message }, { status: 500 })
+        }
 
         if (created) {
           await writeAuditLog({

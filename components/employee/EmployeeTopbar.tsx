@@ -3,14 +3,15 @@
 import { Bell } from 'lucide-react'
 import Link from 'next/link'
 import { formatDate } from '@/lib/utils/time'
+import { useUnread } from '@/components/employee/UnreadProvider'
 
 interface EmployeeTopbarProps {
   title: string
-  unreadCount?: number
 }
 
-export default function EmployeeTopbar({ title, unreadCount = 0 }: EmployeeTopbarProps) {
+export default function EmployeeTopbar({ title }: EmployeeTopbarProps) {
   const today = formatDate(new Date())
+  const unreadCount = useUnread()
 
   return (
     <header className="h-[52px] bg-white border-b border-[#E5E7EB] px-5 flex items-center justify-between sticky top-0 z-20">

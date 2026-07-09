@@ -75,6 +75,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ data: null, error: 'Date and reason are required.' }, { status: 400 })
     }
 
+    const { data: existingRequest } = await supabase
+      .from('wfh_requests')
+      .select('id')
+      .eq('employee_id', profile.id)
+      .eq('date', date)
+      .maybeSingle()
+
+    if (existingRequest) {
+      return NextResponse.json(
+        { data: null, error: 'A WFH request already exists for this date.' },
+        { status: 409 }
+      )
+    }
+
     const { data, error: insertError } = await supabase
       .from('wfh_requests')
       .insert({
@@ -84,7 +98,7 @@ export async function POST(request: NextRequest) {
         status: 'pending'
       })
       .select()
-      .single()
+      .maybeSingle()
 
     if (insertError) {
       console.error('[POST /api/wfh] Insert error:', insertError)

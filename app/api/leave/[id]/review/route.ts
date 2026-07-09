@@ -15,7 +15,8 @@ export async function PATCH(
     if (authError || !user) return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
 
     const { data: caller } = await supabase
-      .from('profiles').select('role').eq('id', user.id).single()
+      .from('profiles').select('role').eq('id', user.id).maybeSingle()
+    if (!caller) return NextResponse.json({ data: null, error: 'Profile not found' }, { status: 404 })
     if (caller?.role !== 'admin') {
       return NextResponse.json({ data: null, error: 'Forbidden' }, { status: 403 })
     }
@@ -34,7 +35,7 @@ export async function PATCH(
       .from('leave_requests')
       .select('*, profiles(full_name, email)')
       .eq('id', id)
-      .single()
+      .maybeSingle()
 
     if (!req) return NextResponse.json({ data: null, error: 'Request not found.' }, { status: 404 })
 
@@ -55,16 +56,32 @@ export async function PATCH(
       const start = new Date(req.start_date)
       const end = new Date(req.end_date)
       const dates: string[] = []
+
+      const { data: holidays } = await adminClient.from('holidays').select('date')
+      const holidayDates = new Set(holidays?.map(h => h.date) ?? [])
+
       for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-        dates.push(d.toISOString().split('T')[0])
+        const dateStr = d.toISOString().split('T')[0]
+        const dayOfWeek = d.getDay()
+
+        if (dayOfWeek === 0 || dayOfWeek === 6) continue
+        if (holidayDates.has(dateStr)) continue
+
+        dates.push(dateStr)
       }
+
       for (const date of dates) {
-        await adminClient.from('attendance').upsert({
+        const { error: mutationError } = await adminClient.from('attendance').upsert({
           employee_id: req.employee_id,
           date,
           type: 'office',
           status: 'leave',
         }, { onConflict: 'employee_id,date' })
+
+        if (mutationError) {
+          console.error('[leave review] mutation failed:', mutationError)
+          return NextResponse.json({ data: null, error: mutationError.message }, { status: 500 })
+        }
       }
     }
 

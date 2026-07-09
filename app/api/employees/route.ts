@@ -6,7 +6,7 @@ async function requireAdmin(supabase: Awaited<ReturnType<typeof createClient>>) 
   const { data: { user }, error } = await supabase.auth.getUser()
   if (error || !user) return null
   const { data: profile } = await supabase
-    .from('profiles').select('role, id').eq('id', user.id).single()
+    .from('profiles').select('role, id').eq('id', user.id).maybeSingle()
   if (profile?.role !== 'admin') return null
   return profile
 }

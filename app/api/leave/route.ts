@@ -79,6 +79,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ data: null, error: 'End date must be after start date.' }, { status: 400 })
     }
 
+    const { data: overlapping } = await supabase
+      .from('leave_requests')
+      .select('id')
+      .eq('employee_id', profile.id)
+      .in('status', ['pending', 'approved'])
+      .lte('start_date', end_date)
+      .gte('end_date', start_date)
+      .limit(1)
+
+    if (overlapping && overlapping.length > 0) {
+      return NextResponse.json(
+        { data: null, error: 'A leave request already exists that overlaps with these dates.' },
+        { status: 409 }
+      )
+    }
+
     const { data, error: insertError } = await supabase
       .from('leave_requests')
       .insert({
@@ -90,7 +106,7 @@ export async function POST(request: NextRequest) {
         status: 'pending',
       })
       .select()
-      .single()
+      .maybeSingle()
 
     if (insertError) {
       console.error('[POST /api/leave] Insert error:', insertError)

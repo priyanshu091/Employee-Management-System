@@ -10,17 +10,25 @@ export async function PATCH(request: NextRequest) {
     const { id, all } = await request.json()
 
     if (all) {
-      await supabase
+      const { error: mutationError } = await supabase
         .from('notifications')
         .update({ is_read: true })
         .eq('user_id', user.id)
         .eq('is_read', false)
+      if (mutationError) {
+        console.error('[notifications] mutation failed:', mutationError)
+        return NextResponse.json({ data: null, error: mutationError.message }, { status: 500 })
+      }
     } else if (id) {
-      await supabase
+      const { error: mutationError } = await supabase
         .from('notifications')
         .update({ is_read: true })
         .eq('id', id)
         .eq('user_id', user.id)
+      if (mutationError) {
+        console.error('[notifications] mutation failed:', mutationError)
+        return NextResponse.json({ data: null, error: mutationError.message }, { status: 500 })
+      }
     }
 
     return NextResponse.json({ data: { ok: true }, error: null })

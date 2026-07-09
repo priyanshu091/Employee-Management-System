@@ -86,7 +86,7 @@ export default function ProfilePage() {
   if (!profile) {
     return (
       <>
-        <EmployeeTopbar title="Profile" unreadCount={0} />
+        <EmployeeTopbar title="Profile" />
         <main className="flex-1 p-5">
           <div className="bg-white border border-[#E5E7EB] rounded-xl h-40 animate-pulse" />
         </main>
@@ -96,7 +96,7 @@ export default function ProfilePage() {
 
   return (
     <>
-      <EmployeeTopbar title="Profile" unreadCount={0} />
+      <EmployeeTopbar title="Profile" />
 
       <main className="flex-1 p-5">
         <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr] gap-4">

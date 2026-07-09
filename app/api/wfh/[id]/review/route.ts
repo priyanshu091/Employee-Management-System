@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createNotification } from '@/lib/utils/notify'
@@ -69,12 +69,14 @@ export async function PATCH(
       type: 'wfh',
     })
 
-    await sendNotificationEmail(
-      req.profile.email,
-      isApproved ? 'WFH Request Approved' : 'WFH Request Rejected',
-      isApproved ? 'WFH Request Approved' : 'WFH Request Rejected',
-      isApproved ? `Your WFH for ${req.date} is approved.` : `Your WFH for ${req.date} was not approved.`
-    )
+    after(() => {
+      sendNotificationEmail(
+        req.profile.email,
+        isApproved ? 'WFH Request Approved' : 'WFH Request Rejected',
+        isApproved ? 'WFH Request Approved' : 'WFH Request Rejected',
+        isApproved ? `Your WFH for ${req.date} is approved.` : `Your WFH for ${req.date} was not approved.`
+      ).catch((err) => console.error('[wfh email]', err))
+    })
 
     return NextResponse.json({ data, error: null })
   } catch {

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createNotification } from '@/lib/utils/notify'
@@ -123,14 +123,16 @@ export async function PATCH(
       type: 'correction',
     })
 
-    await sendNotificationEmail(
-      req.profile.email,
-      isApproved ? 'Correction Approved' : 'Correction Rejected',
-      isApproved ? 'Attendance Correction Approved' : 'Attendance Correction Rejected',
-      isApproved
-        ? `Your correction for ${req.date} has been applied.`
-        : `Your correction for ${req.date} was not approved.`
-    )
+    after(() => {
+      sendNotificationEmail(
+        req.profile.email,
+        isApproved ? 'Correction Approved' : 'Correction Rejected',
+        isApproved ? 'Attendance Correction Approved' : 'Attendance Correction Rejected',
+        isApproved
+          ? `Your correction for ${req.date} has been applied.`
+          : `Your correction for ${req.date} was not approved.`
+      ).catch((err) => console.error('[correction email]', err))
+    })
 
     return NextResponse.json({ data, error: null })
   } catch {

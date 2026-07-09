@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse, after } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { createNotification } from '@/lib/utils/notify'
@@ -95,14 +95,16 @@ export async function PATCH(
       type: 'leave',
     })
 
-    await sendNotificationEmail(
-      req.profile.email,
-      isApproved ? 'Leave Request Approved' : 'Leave Request Rejected',
-      isApproved ? 'Leave Request Approved' : 'Leave Request Rejected',
-      isApproved
-        ? `Your ${req.leave_type} request has been approved.`
-        : `Your ${req.leave_type} request was not approved. ${reason ?? ''}`
-    )
+    after(() => {
+      sendNotificationEmail(
+        req.profile.email,
+        isApproved ? 'Leave Request Approved' : 'Leave Request Rejected',
+        isApproved ? 'Leave Request Approved' : 'Leave Request Rejected',
+        isApproved
+          ? `Your ${req.leave_type} request has been approved.`
+          : `Your ${req.leave_type} request was not approved. ${reason ?? ''}`
+      ).catch((err) => console.error('[leave email]', err))
+    })
 
     return NextResponse.json({ data, error: null })
   } catch (err) {

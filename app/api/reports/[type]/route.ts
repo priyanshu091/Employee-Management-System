@@ -201,7 +201,7 @@ export async function GET(
 
       let query = supabase
         .from('leave_requests')
-        .select('*, profile:profiles(full_name, employee_id, department)')
+        .select('*, profile:profiles!leave_requests_employee_id_fkey(full_name, employee_id, department)')
         .gte('start_date', startDate)
         .lte('end_date', endDate)
         .order('created_at', { ascending: false })
@@ -242,7 +242,7 @@ export async function GET(
 
       let query = supabase
         .from('wfh_requests')
-        .select('*, profile:profiles(full_name, employee_id, department)')
+        .select('*, profile:profiles!wfh_requests_employee_id_fkey(full_name, employee_id, department)')
         .gte('date', startDate)
         .lte('date', endDate)
         .order('created_at', { ascending: false })

@@ -1,0 +1,122 @@
+'use client'
+
+import { useState, useMemo, useEffect, useCallback } from 'react'
+import { Download } from 'lucide-react'
+import AdminTopbar from '@/components/admin/AdminTopbar'
+import SearchFilterBar from '@/components/admin/SearchFilterBar'
+import AdminAttendanceTable from '@/components/admin/AdminAttendanceTable'
+import { useToast } from '@/components/shared/Toast'
+import { getAdminAttendance } from '@/lib/api/admin'
+import type { AttendanceStatus } from '@/types'
+import type { AttendanceWithProfile } from '@/types'
+
+const MONTH_OPTIONS = [
+  { value: 'all', label: 'All dates' },
+  { value: '2026-07', label: 'July 2026' },
+  { value: '2026-06', label: 'June 2026' },
+]
+
+const STATUS_OPTIONS = [
+  { value: 'all', label: 'All statuses' },
+  { value: 'present', label: 'Present' },
+  { value: 'late', label: 'Late' },
+  { value: 'absent', label: 'Absent' },
+  { value: 'wfh', label: 'WFH' },
+  { value: 'leave', label: 'Leave' },
+]
+
+const SUMMARY_STATS: { label: string; status: AttendanceStatus; color: string }[] = [
+  { label: 'Present', status: 'present', color: '#16A34A' },
+  { label: 'Late', status: 'late', color: '#D97706' },
+  { label: 'Absent', status: 'absent', color: '#DC2626' },
+  { label: 'WFH', status: 'wfh', color: '#2563EB' },
+  { label: 'Leave', status: 'leave', color: '#7C3AED' },
+]
+
+export default function AdminAttendancePage() {
+  const { showToast } = useToast()
+  const [rows, setRows] = useState<AttendanceWithProfile[]>([])
+  const [loading, setLoading] = useState(true)
+  const [search, setSearch] = useState('')
+  const [month, setMonth] = useState('all')
+  const [status, setStatus] = useState('all')
+
+  useEffect(() => {
+    setLoading(true)
+    getAdminAttendance({ month, status }).then((data) => {
+      setRows(data)
+      setLoading(false)
+    })
+  }, [month, status])
+
+  const filtered = useMemo(() => {
+    return rows.filter((r) => {
+      const q = search.toLowerCase()
+      const matchSearch = !q
+        || r.profile?.full_name?.toLowerCase().includes(q)
+        || r.profile?.employee_id?.toLowerCase().includes(q)
+      return matchSearch
+    })
+  }, [rows, search])
+
+  const handleRowUpdate = useCallback((updated: AttendanceWithProfile) => {
+    setRows((prev) => prev.map((r) => r.id === updated.id ? { ...r, ...updated, profile: r.profile } : r))
+  }, [])
+
+  const countByStatus = (s: AttendanceStatus) => filtered.filter((r) => r.status === s).length
+
+  return (
+    <>
+      <AdminTopbar title="Attendance Records" />
+
+      <main className="flex-1 p-5">
+        {/* Filter bar */}
+        <SearchFilterBar
+          searchValue={search}
+          onSearchChange={setSearch}
+          searchPlaceholder="Search by employee name or ID..."
+          selects={[
+            { value: month, onChange: setMonth, options: MONTH_OPTIONS, ariaLabel: 'Month' },
+            { value: status, onChange: setStatus, options: STATUS_OPTIONS, ariaLabel: 'Status' },
+          ]}
+          rightSlot={
+            <button
+              onClick={() => showToast('Export feature arrives in Phase 10.', 'success')}
+              className="flex items-center gap-2 border border-[#E5E7EB] text-[#374151] hover:bg-[#F9FAFB] px-4 py-2 rounded-lg text-[13px] transition-colors duration-150 flex-shrink-0"
+            >
+              <Download size={14} strokeWidth={1.75} />
+              Export
+            </button>
+          }
+          className="mb-4"
+        />
+
+        {/* Summary strip */}
+        <div className="bg-white border border-[#E5E7EB] rounded-xl px-5 py-3 flex flex-wrap gap-6 mb-4">
+          {SUMMARY_STATS.map(({ label, status: s, color }) => (
+            <div key={label} className="flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full flex-shrink-0" style={{ background: color }} />
+              <span className="text-[12px] text-[#6B7280]">{label}:</span>
+              <span className="text-[12px] font-medium text-[#111827]">{countByStatus(s)}</span>
+            </div>
+          ))}
+          <span className="ml-auto text-[12px] text-[#9CA3AF]">{filtered.length} records</span>
+        </div>
+
+        {/* Table */}
+        {loading ? (
+          <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
+            {Array.from({ length: 8 }).map((_, i) => (
+              <div key={i} className="h-14 border-b border-[#F3F4F6] last:border-0 bg-[#F3F4F6] animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <AdminAttendanceTable
+            rows={filtered}
+            onRowUpdate={handleRowUpdate}
+          />
+        )}
+      </main>
+    </>
+  )
+}

@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
       let query = supabase
         .from('leave_requests')
-        .select('*, profiles(full_name, employee_id, avatar_url)')
+        .select('*, profile:profiles!leave_requests_employee_id_fkey(full_name, employee_id, avatar_url)')
         .order('created_at', { ascending: false })
       
       if (statusFilter && statusFilter !== 'all') {

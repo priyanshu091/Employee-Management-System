@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
 
       let query = supabase
         .from('correction_requests')
-        .select('*, profiles(full_name, employee_id, avatar_url)')
+        .select('*, profile:profiles!correction_requests_employee_id_fkey(full_name, employee_id, avatar_url)')
         .order('created_at', { ascending: false })
       
       if (statusFilter && statusFilter !== 'all') {
@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
         status: 'pending',
       })
       .select()
-      .single()
+      .maybeSingle()
 
     if (insertError) {
       console.error('[POST /api/correction] Insert error:', insertError)

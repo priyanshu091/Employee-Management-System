@@ -1,10 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import useSWR from 'swr'
 import { Hash, Calendar, Mail, Shield } from 'lucide-react'
 import EmployeeTopbar from '@/components/employee/EmployeeTopbar'
 import FormField, { INPUT_CLASS } from '@/components/shared/FormField'
 import { useToast } from '@/components/shared/Toast'
+import { getMyProfile } from '@/lib/api/employee'
 import type { Profile } from '@/types'
 
 function getInitials(name: string) {
@@ -32,7 +34,7 @@ function Spinner() {
 
 export default function ProfilePage() {
   const { showToast } = useToast()
-  const [profile, setProfile] = useState<Profile | null>(null)
+  const { data: profile, mutate } = useSWR('myProfile', getMyProfile)
   const [isEditing, setIsEditing] = useState(false)
   const [phone, setPhone] = useState('')
   const [emergency, setEmergency] = useState('')
@@ -41,16 +43,11 @@ export default function ProfilePage() {
   const [saving, setSaving] = useState(false)
 
   useEffect(() => {
-    fetch('/api/profile')
-      .then((r) => r.json())
-      .then((json) => {
-        if (!json.error && json.data) {
-          setProfile(json.data)
-          setPhone(json.data.phone ?? '')
-          setEmergency(json.data.emergency_contact ?? '')
-        }
-      })
-  }, [])
+    if (profile) {
+      setPhone(profile.phone ?? '')
+      setEmergency(profile.emergency_contact ?? '')
+    }
+  }, [profile])
 
   const handleEdit = () => {
     setPhoneTemp(phone)
@@ -80,6 +77,7 @@ export default function ProfilePage() {
     setPhone(phoneTemp)
     setEmergency(emergTemp)
     setIsEditing(false)
+    if (profile) mutate({ ...profile, phone: phoneTemp, emergency_contact: emergTemp }, false)
     showToast('Profile updated successfully.', 'success')
   }
 

@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useCallback } from 'react'
+import useSWR from 'swr'
 import AdminTopbar from '@/components/admin/AdminTopbar'
 import SearchFilterBar from '@/components/admin/SearchFilterBar'
 import EmployeeTable from '@/components/admin/EmployeeTable'
@@ -23,21 +24,16 @@ const STATUS_OPTIONS = [
 
 export default function AdminEmployeesPage() {
   const { showToast } = useToast()
-  const [employees, setEmployees] = useState<Profile[]>([])
-  const [loading, setLoading] = useState(true)
+  
   const [search, setSearch] = useState('')
   const [dept, setDept] = useState('all')
   const [status, setStatus] = useState('all')
   const [drawerOpen, setDrawerOpen] = useState(false)
   const [editTarget, setEditTarget] = useState<Profile | null>(null)
 
-  useEffect(() => {
-    getAllEmployees().then((data) => {
-      setEmployees(data)
-      setLoading(false)
-    })
-  }, [])
-
+  const { data, isLoading: loading, mutate } = useSWR('allEmployees', getAllEmployees)
+  const employees = data || []
+  
   const nextId = `EMP-${String(employees.length + 1).padStart(3, '0')}`
 
   const filtered = useMemo(() => {
@@ -73,7 +69,10 @@ export default function AdminEmployeesPage() {
         showToast(res.error, 'error')
         return false
       }
-      setEmployees((prev) => prev.map((e) => e.id === editId ? { ...e, ...res.data } : e))
+      mutate(
+        (prev = []) => prev.map((e) => e.id === editId ? { ...e, ...res.data } : e),
+        false
+      )
       showToast(`${data.fullName} updated successfully.`, 'success')
       return true
     } else {
@@ -89,7 +88,7 @@ export default function AdminEmployeesPage() {
         showToast(res.error, 'error')
         return false
       }
-      setEmployees((prev) => [res.data, ...prev])
+      mutate((prev = []) => [res.data, ...prev], false)
       showToast(`${data.fullName} added successfully.`, 'success')
       return true
     }
@@ -101,10 +100,11 @@ export default function AdminEmployeesPage() {
       showToast(res.error, 'error')
       return
     }
-    setEmployees((prev) =>
-      prev.map((e) => e.id === id ? { ...e, status: newStatus } : e)
+    mutate(
+      (prev = []) => prev.map((e) => e.id === id ? { ...e, status: newStatus } : e),
+      false
     )
-  }, [showToast])
+  }, [showToast, mutate])
 
   return (
     <>

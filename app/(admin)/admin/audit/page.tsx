@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState } from 'react'
+import useSWR from 'swr'
 import { AlertTriangle } from 'lucide-react'
 import AdminTopbar from '@/components/admin/AdminTopbar'
 import AuditTable from '@/components/admin/AuditTable'
@@ -12,35 +13,24 @@ export default function AdminAuditPage() {
   const [dateFrom, setDateFrom] = useState('')
   const [dateTo, setDateTo] = useState('')
   const [employee, setEmployee] = useState('all')
-  const [employees, setEmployees] = useState<Profile[]>([])
-  const [entries, setEntries] = useState<AuditLogWithProfiles[]>([])
-  const [loading, setLoading] = useState(true)
-
-  const fetchEntries = useCallback((params: { employee?: string; from?: string; to?: string }) => {
-    setLoading(true)
-    getAuditLog(params).then((data) => {
-      setEntries(data)
-      setLoading(false)
-    })
-  }, [])
-
-  useEffect(() => {
-    fetchEntries({})
-    getAllEmployees().then(setEmployees)
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  const { data: employeesData } = useSWR('allEmployees', getAllEmployees)
+  const employees = employeesData || []
 
   const [applied, setApplied] = useState({ dateFrom: '', dateTo: '', employee: 'all' })
 
+  const { data: entriesData, isLoading: loading } = useSWR(
+    ['auditLog', applied.employee, applied.dateFrom, applied.dateTo],
+    ([_, e, f, t]) => getAuditLog({ employee: e === 'all' ? undefined : (e as string), from: f as string || undefined, to: t as string || undefined })
+  )
+  const entries = entriesData || []
+
   const handleFilter = () => {
     setApplied({ dateFrom, dateTo, employee })
-    fetchEntries({ employee, from: dateFrom || undefined, to: dateTo || undefined })
   }
 
   const handleClear = () => {
     setDateFrom(''); setDateTo(''); setEmployee('all')
     setApplied({ dateFrom: '', dateTo: '', employee: 'all' })
-    fetchEntries({})
   }
 
   const SELECT_CLASS = `border border-[#E5E7EB] rounded-md px-3 py-2 text-[13px] text-[#111827] bg-white focus:border-[#4F46E5] focus:ring-1 focus:ring-[#4F46E5] outline-none transition-colors duration-150`

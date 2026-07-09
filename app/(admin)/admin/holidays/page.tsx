@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
+import useSWR from 'swr'
 import { CalendarX } from 'lucide-react'
 import AdminTopbar from '@/components/admin/AdminTopbar'
 import HolidayCard from '@/components/admin/HolidayCard'
@@ -20,17 +21,10 @@ function isUpcoming(date: string): boolean {
 
 export default function AdminHolidaysPage() {
   const { showToast } = useToast()
-  const [holidays, setHolidays] = useState<Holiday[]>([])
-  const [loading, setLoading] = useState(true)
+  const { data, isLoading: loading, mutate } = useSWR('adminHolidays', getHolidays)
   const [showModal, setShowModal] = useState(false)
   const [deleteTarget, setDeleteTarget] = useState<Holiday | null>(null)
-
-  useEffect(() => {
-    getHolidays().then((data) => {
-      setHolidays(data)
-      setLoading(false)
-    })
-  }, [])
+  const holidays = data || []
 
   // Sort: upcoming first, then past — both sorted by date
   const sorted = [...holidays].sort((a, b) => {
@@ -46,7 +40,7 @@ export default function AdminHolidaysPage() {
       showToast(res.error, 'error')
       return
     }
-    setHolidays((prev) => [...prev, res.data])
+    mutate((prev = []) => [...prev, res.data], false)
     showToast(`"${name}" added to holidays.`, 'success')
   }, [showToast])
 
@@ -58,7 +52,7 @@ export default function AdminHolidaysPage() {
       setDeleteTarget(null)
       return
     }
-    setHolidays((prev) => prev.filter((h) => h.id !== deleteTarget.id))
+    mutate((prev = []) => prev.filter((h) => h.id !== deleteTarget.id), false)
     showToast(`"${deleteTarget.name}" removed.`, 'error')
     setDeleteTarget(null)
   }, [deleteTarget, showToast])

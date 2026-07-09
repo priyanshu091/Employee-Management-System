@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import useSWR from 'swr'
 import { FileEdit } from 'lucide-react'
 import EmployeeTopbar from '@/components/employee/EmployeeTopbar'
 import PageHeader from '@/components/shared/PageHeader'
@@ -9,6 +10,7 @@ import ApplyCorrectionModal from '@/components/employee/ApplyCorrectionModal'
 import EmptyState from '@/components/shared/EmptyState'
 import PageLoader from '@/components/shared/PageLoader'
 import { useToast } from '@/components/shared/Toast'
+import { getMyCorrectionRequests } from '@/lib/api/employee'
 import type { CorrectionRequest } from '@/types'
 
 function fmtDate(d: string) {
@@ -26,15 +28,9 @@ function fmtTime(t: string) {
 export default function CorrectionPage() {
   const { showToast } = useToast()
   const [showModal, setShowModal] = useState(false)
-  const [requests, setRequests] = useState<CorrectionRequest[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetch('/api/correction')
-      .then((r) => r.json())
-      .then((json) => { if (!json.error) setRequests(json.data ?? []) })
-      .finally(() => setLoading(false))
-  }, [])
+  
+  const { data, isLoading: loading, mutate } = useSWR('myCorrectionRequests', getMyCorrectionRequests)
+  const requests = data || []
 
   const handleSubmit = async (data: {
     date: string
@@ -59,7 +55,7 @@ export default function CorrectionPage() {
       return
     }
 
-    setRequests((prev) => [json.data, ...prev])
+    mutate([json.data, ...requests], false)
     showToast('Correction request submitted. Admin will review it.', 'success')
   }
 

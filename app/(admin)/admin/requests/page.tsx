@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useCallback } from 'react'
+import useSWR from 'swr'
 import { Inbox, Umbrella, Home, FileEdit } from 'lucide-react'
 import AdminTopbar from '@/components/admin/AdminTopbar'
 import RejectReasonModal from '@/components/admin/RejectReasonModal'
@@ -52,18 +53,10 @@ function detailsFor(category: RequestCategory, req: AnyRequest): string {
 export default function AdminRequestsPage() {
   const { showToast } = useToast()
   const [activeTab, setActiveTab] = useState<RequestCategory>('leave')
-  const [requests, setRequests] = useState<Record<RequestCategory, AnyRequest[]>>({
-    leave: [], wfh: [], correction: [],
-  })
-  const [loading, setLoading] = useState(true)
+  const { data, isLoading: loading, mutate } = useSWR('pendingRequests', getPendingRequests)
   const [rejectTarget, setRejectTarget] = useState<RejectTarget | null>(null)
-
-  useEffect(() => {
-    getPendingRequests().then((data) => {
-      setRequests(data)
-      setLoading(false)
-    })
-  }, [])
+  
+  const requests = data || { leave: [], wfh: [], correction: [] }
 
   const tabRequests = requests[activeTab]
   const countFor = (cat: RequestCategory) => requests[cat].length
@@ -74,7 +67,13 @@ export default function AdminRequestsPage() {
       showToast(res.error, 'error')
       return
     }
-    setRequests((prev) => ({ ...prev, [category]: prev[category].filter((r) => r.id !== id) }))
+    mutate(
+      (prev) => {
+        if (!prev) return prev
+        return { ...prev, [category]: prev[category].filter((r) => r.id !== id) }
+      },
+      false
+    )
     showToast(`Approved — ${name}`, 'success')
   }, [showToast])
 
@@ -86,10 +85,16 @@ export default function AdminRequestsPage() {
       setRejectTarget(null)
       return
     }
-    setRequests((prev) => ({
-      ...prev,
-      [rejectTarget.category]: prev[rejectTarget.category].filter((r) => r.id !== rejectTarget.id),
-    }))
+    mutate(
+      (prev) => {
+        if (!prev) return prev
+        return {
+          ...prev,
+          [rejectTarget.category]: prev[rejectTarget.category].filter((r) => r.id !== rejectTarget.id),
+        }
+      },
+      false
+    )
     showToast(`Rejected — ${rejectTarget.employeeName}`, 'error')
     setRejectTarget(null)
   }, [rejectTarget, showToast])

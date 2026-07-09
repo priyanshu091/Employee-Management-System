@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import useSWR from 'swr'
 import { UserPlus, BarChart2, CalendarPlus } from 'lucide-react'
 import AdminTopbar from '@/components/admin/AdminTopbar'
 import StatCard from '@/components/admin/StatCard'
@@ -18,19 +18,10 @@ interface InOfficeRow {
 const EMPTY_STATS = { totalEmployees: 0, present: 0, absent: 0, late: 0, wfh: 0, onLeave: 0 }
 
 export default function AdminDashboardPage() {
-  const [stats, setStats] = useState(EMPTY_STATS)
-  const [inOffice, setInOffice] = useState<InOfficeRow[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    getDashboardStats().then((data) => {
-      if (data) {
-        setStats(data.stats)
-        setInOffice(data.inOffice)
-      }
-      setLoading(false)
-    })
-  }, [])
+  const { data, isLoading: loading } = useSWR('adminDashboardStats', getDashboardStats)
+  
+  const stats = data?.stats || EMPTY_STATS
+  const inOffice = data?.inOffice || []
 
   const statCards = [
     { label: 'Total employees', value: stats.totalEmployees, dotColor: '#9CA3AF' },

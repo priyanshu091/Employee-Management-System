@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import useSWR from 'swr'
 import { Umbrella } from 'lucide-react'
 import EmployeeTopbar from '@/components/employee/EmployeeTopbar'
 import PageHeader from '@/components/shared/PageHeader'
@@ -9,6 +10,7 @@ import ApplyLeaveModal from '@/components/employee/ApplyLeaveModal'
 import EmptyState from '@/components/shared/EmptyState'
 import PageLoader from '@/components/shared/PageLoader'
 import { useToast } from '@/components/shared/Toast'
+import { getMyLeaveRequests } from '@/lib/api/employee'
 import type { LeaveRequest } from '@/types'
 
 function fmtDate(d: string) {
@@ -28,15 +30,9 @@ function fmtDuration(start: string, end: string) {
 export default function LeavePage() {
   const { showToast } = useToast()
   const [showModal, setShowModal] = useState(false)
-  const [requests, setRequests] = useState<LeaveRequest[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetch('/api/leave')
-      .then((r) => r.json())
-      .then((json) => { if (!json.error) setRequests(json.data ?? []) })
-      .finally(() => setLoading(false))
-  }, [])
+  
+  const { data, isLoading: loading, mutate } = useSWR('myLeaveRequests', getMyLeaveRequests)
+  const requests = data || []
 
   const handleSubmit = async (data: {
     leaveType: string
@@ -61,7 +57,7 @@ export default function LeavePage() {
       return
     }
 
-    setRequests((prev) => [json.data, ...prev])
+    mutate([json.data, ...requests], false)
     showToast('Leave request submitted successfully.', 'success')
   }
 

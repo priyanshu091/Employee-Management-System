@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useCallback, useEffect } from 'react'
+import useSWR from 'swr'
 import AdminTopbar from '@/components/admin/AdminTopbar'
 import FormField, { INPUT_CLASS } from '@/components/shared/FormField'
 import { useToast } from '@/components/shared/Toast'
@@ -47,19 +48,17 @@ export default function AdminSettingsPage() {
   const { showToast } = useToast()
   const [form, setForm] = useState<SettingsForm | null>(null)
   const [saved, setSaved] = useState<SettingsForm | null>(null)
-  const [loading, setLoading] = useState(true)
+  const { data, isLoading: loading, mutate } = useSWR('companySettings', getSettings)
   const [saving, setSaving] = useState(false)
 
+  // Initialize form state when data loads
   useEffect(() => {
-    getSettings().then((data) => {
-      if (data) {
-        const f = toForm(data)
-        setForm(f)
-        setSaved(f)
-      }
-      setLoading(false)
-    })
-  }, [])
+    if (data && !form && !saved) {
+      const f = toForm(data)
+      setForm(f)
+      setSaved(f)
+    }
+  }, [data, form, saved])
 
   const isDirty = form && saved && JSON.stringify(form) !== JSON.stringify(saved)
 
@@ -87,8 +86,9 @@ export default function AdminSettingsPage() {
       return
     }
     setSaved(form)
+    if (data) mutate({ ...data, ...form, office_lat: Number(form.officeLat), office_lng: Number(form.officeLng) }, false)
     showToast('Settings saved successfully.', 'success')
-  }, [form, showToast])
+  }, [form, showToast, data, mutate])
 
   const handleDiscard = () => {
     if (saved) setForm(saved)

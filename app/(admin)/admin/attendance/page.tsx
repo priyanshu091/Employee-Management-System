@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useCallback } from 'react'
+import useSWR from 'swr'
 import { Download } from 'lucide-react'
 import AdminTopbar from '@/components/admin/AdminTopbar'
 import SearchFilterBar from '@/components/admin/SearchFilterBar'
@@ -48,19 +49,17 @@ const SUMMARY_STATS: { label: string; status: AttendanceStatus; color: string }[
 
 export default function AdminAttendancePage() {
   const { showToast } = useToast()
-  const [rows, setRows] = useState<AttendanceWithProfile[]>([])
-  const [loading, setLoading] = useState(true)
+  
   const [search, setSearch] = useState('')
   const [month, setMonth] = useState('all')
   const [status, setStatus] = useState('all')
 
-  useEffect(() => {
-    setLoading(true)
-    getAdminAttendance({ month, status }).then((data) => {
-      setRows(data)
-      setLoading(false)
-    })
-  }, [month, status])
+  const { data, isLoading: loading, mutate } = useSWR(
+    ['adminAttendance', month, status],
+    ([_, m, s]) => getAdminAttendance({ month: m as string, status: s as string })
+  )
+  
+  const rows = data || []
 
   const filtered = useMemo(() => {
     return rows.filter((r) => {
@@ -73,8 +72,11 @@ export default function AdminAttendancePage() {
   }, [rows, search])
 
   const handleRowUpdate = useCallback((updated: AttendanceWithProfile) => {
-    setRows((prev) => prev.map((r) => r.id === updated.id ? { ...r, ...updated, profile: r.profile } : r))
-  }, [])
+    mutate(
+      (prev = []) => prev.map((r) => r.id === updated.id ? { ...r, ...updated, profile: r.profile } : r),
+      false
+    )
+  }, [mutate])
 
   const countByStatus = (s: AttendanceStatus) => filtered.filter((r) => r.status === s).length
 

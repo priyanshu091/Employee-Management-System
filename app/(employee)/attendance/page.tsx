@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { useState, useMemo } from 'react'
+import useSWR from 'swr'
 import EmployeeTopbar from '@/components/employee/EmployeeTopbar'
 import AttendanceFilterBar from '@/components/employee/AttendanceFilterBar'
 import PageLoader from '@/components/shared/PageLoader'
@@ -17,16 +18,13 @@ export default function AttendancePage() {
   const [selectedYear, setSelectedYear] = useState(today.getFullYear())
   const [selectedStatus, setSelectedStatus] = useState('all')
   const [selectedDay, setSelectedDay] = useState<Attendance | null>(null)
-  const [attendance, setAttendance] = useState<Attendance[]>([])
-  const [loading, setLoading] = useState(true)
 
-  useEffect(() => {
-    setLoading(true)
-    getAttendanceHistory(selectedYear, selectedMonth).then((data) => {
-      setAttendance(data)
-      setLoading(false)
-    })
-  }, [selectedMonth, selectedYear])
+  const { data: attendanceData, isLoading: loading } = useSWR(
+    ['attendanceHistory', selectedYear, selectedMonth],
+    ([_, y, m]) => getAttendanceHistory(y as number, m as number)
+  )
+  
+  const attendance = attendanceData || []
 
   // Filter rows based on selected status (month/year already filtered by the query)
   const filteredRows = useMemo(() => {

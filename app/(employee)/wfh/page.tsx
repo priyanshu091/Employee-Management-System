@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import useSWR from 'swr'
 import { Home } from 'lucide-react'
 import EmployeeTopbar from '@/components/employee/EmployeeTopbar'
 import PageHeader from '@/components/shared/PageHeader'
@@ -9,6 +10,7 @@ import ApplyWFHModal from '@/components/employee/ApplyWFHModal'
 import EmptyState from '@/components/shared/EmptyState'
 import PageLoader from '@/components/shared/PageLoader'
 import { useToast } from '@/components/shared/Toast'
+import { getMyWFHRequests } from '@/lib/api/employee'
 import type { WFHRequest } from '@/types'
 
 function fmtDate(d: string) {
@@ -18,15 +20,9 @@ function fmtDate(d: string) {
 export default function WFHPage() {
   const { showToast } = useToast()
   const [showModal, setShowModal] = useState(false)
-  const [requests, setRequests] = useState<WFHRequest[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    fetch('/api/wfh')
-      .then((r) => r.json())
-      .then((json) => { if (!json.error) setRequests(json.data ?? []) })
-      .finally(() => setLoading(false))
-  }, [])
+  
+  const { data, isLoading: loading, mutate } = useSWR('myWFHRequests', getMyWFHRequests)
+  const requests = data || []
 
   const handleSubmit = async (data: { date: string; reason: string }) => {
     const res = await fetch('/api/wfh', {
@@ -41,7 +37,7 @@ export default function WFHPage() {
       return
     }
 
-    setRequests((prev) => [json.data, ...prev])
+    mutate([json.data, ...requests], false)
     showToast('WFH request submitted. Waiting for admin approval.', 'success')
   }
 

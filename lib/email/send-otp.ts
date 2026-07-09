@@ -1,13 +1,12 @@
-import { Resend } from 'resend'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
+import { transporter } from './mailer'
 
 export async function sendOTPEmail(email: string, otp: string): Promise<void> {
-  const { error } = await resend.emails.send({
-    from: 'AttendEase <onboarding@resend.dev>',
-    to: email,
-    subject: `Your login code: ${otp}`,
-    html: `
+  try {
+    await transporter.sendMail({
+      from: `"AttendEase" <${process.env.GMAIL_USER}>`,
+      to: email,
+      subject: 'Your AttendEase login code',
+      html: `
       <div style="font-family:Inter,sans-serif;max-width:420px;margin:0 auto;padding:32px">
         <h2 style="font-size:18px;font-weight:600;color:#111827;margin:0 0 8px">AttendEase</h2>
         <p style="color:#6B7280;font-size:14px;margin:0 0 24px">Your one-time login code:</p>
@@ -19,9 +18,9 @@ export async function sendOTPEmail(email: string, otp: string): Promise<void> {
         </p>
       </div>
     `,
-  })
-
-  if (error) {
-    throw new Error(`Resend failed to send OTP email: ${error.message}`)
+    })
+  } catch (error) {
+    console.error('Nodemailer failed to send OTP email:', error)
+    throw error
   }
 }

@@ -1,6 +1,4 @@
-import { Resend } from 'resend'
-
-const resend = new Resend(process.env.RESEND_API_KEY)
+import { transporter } from './mailer'
 
 export async function sendNotificationEmail(
   to: string,
@@ -9,8 +7,8 @@ export async function sendNotificationEmail(
   message: string
 ): Promise<void> {
   try {
-    await resend.emails.send({
-      from: 'AttendEase <onboarding@resend.dev>',
+    await transporter.sendMail({
+      from: `"AttendEase" <${process.env.GMAIL_USER}>`,
       to,
       subject,
       html: `
@@ -27,5 +25,6 @@ export async function sendNotificationEmail(
     })
   } catch (err) {
     console.error('[send-notification-email]', err)
+    throw err
   }
 }

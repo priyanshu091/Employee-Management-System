@@ -1,5 +1,5 @@
 import * as XLSX from 'xlsx'
-import type { ReportRow, ReportType } from '@/lib/mock/reports'
+import type { ReportType } from '@/lib/mock/reports'
 import type { AttendanceWithProfile } from '@/types'
 
 export function exportReportToExcel(type: ReportType | 'attendance', rows: any[], label: string): void {
@@ -18,56 +18,60 @@ export function exportReportToExcel(type: ReportType | 'attendance', rows: any[]
       'Late Reason': r.late_reason || '—'
     }))
   } else {
-    // ReportRow types
-    const reportRows = rows as ReportRow[]
     switch (type) {
       case 'daily':
       case 'employee':
-        data = reportRows.map(r => ({
-          'Employee Name': r.employeeName,
-          'Employee ID': r.employeeId,
-          'Check In': r.checkIn || '—',
-          'Check Out': r.checkOut || '—',
-          'Working Hours': r.workingHours || '—',
+        data = rows.map(r => ({
+          'Employee Name': r.employee_name || '—',
+          'Employee ID': r.employee_id || '—',
+          'Department': r.department || '—',
+          'Date': r.date || '—',
+          'Check In': r.check_in || '—',
+          'Check Out': r.check_out || '—',
+          'Working Hours': r.working_hours || '—',
           'Status': r.status || '—'
         }))
         break
       case 'monthly':
-        data = reportRows.map(r => ({
-          'Employee Name': r.employeeName,
-          'Employee ID': r.employeeId,
-          'Days Present': r.days || 0,
-          'Total Hours': r.workingHours || '—',
-          'Status': r.status || '—'
+        data = rows.map(r => ({
+          'Employee Name': r.employee_name || '—',
+          'Employee ID': r.employee_id || '—',
+          'Department': r.department || '—',
+          'Present Days': r.present_days ?? 0,
+          'Late Days': r.late_days ?? 0,
+          'WFH Days': r.wfh_days ?? 0,
+          'Leave Days': r.leave_days ?? 0,
+          'Total Hours': r.total_working_hours || '—'
         }))
         break
       case 'leave':
-        data = reportRows.map(r => ({
-          'Employee Name': r.employeeName,
-          'Employee ID': r.employeeId,
-          'Leave Type': r.leaveType || '—',
-          'Date Range': r.date || '—',
-          'Days': r.days || 0,
+        data = rows.map(r => ({
+          'Employee Name': r.employee_name || '—',
+          'Employee ID': r.employee_id || '—',
+          'Leave Type': r.leave_type || '—',
+          'Start Date': r.start_date || '—',
+          'End Date': r.end_date || '—',
+          'Days': r.days ?? 0,
           'Status': r.status || '—'
         }))
         break
       case 'wfh':
-        data = reportRows.map(r => ({
-          'Employee Name': r.employeeName,
-          'Employee ID': r.employeeId,
+        data = rows.map(r => ({
+          'Employee Name': r.employee_name || '—',
+          'Employee ID': r.employee_id || '—',
           'Date': r.date || '—',
-          'Days': r.days || 0,
           'Reason': r.reason || '—',
           'Status': r.status || '—'
         }))
         break
       case 'late':
-        data = reportRows.map(r => ({
-          'Employee Name': r.employeeName,
-          'Employee ID': r.employeeId,
+        data = rows.map(r => ({
+          'Employee Name': r.employee_name || '—',
+          'Employee ID': r.employee_id || '—',
+          'Department': r.department || '—',
           'Date': r.date || '—',
-          'Check In': r.checkIn || '—',
-          'Reason': r.reason || '—'
+          'Check In': r.check_in || '—',
+          'Reason': r.late_reason || '—'
         }))
         break
     }

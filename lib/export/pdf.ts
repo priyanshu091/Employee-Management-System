@@ -1,8 +1,9 @@
 import jsPDF from 'jspdf'
 import autoTable from 'jspdf-autotable'
-import type { ReportRow, ReportType } from '@/lib/mock/reports'
+import type { ReportType } from '@/lib/mock/reports'
 
-export function exportReportToPDF(type: ReportType, rows: ReportRow[], label: string): void {
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function exportReportToPDF(type: ReportType, rows: any[], label: string): void {
   const doc = new jsPDF()
 
   // Header
@@ -18,52 +19,55 @@ export function exportReportToPDF(type: ReportType, rows: ReportRow[], label: st
   switch (type) {
     case 'daily':
     case 'employee':
-      head = [['Employee', 'Check In', 'Check Out', 'Hours', 'Status']]
+      head = [['Employee', 'Date', 'Check In', 'Check Out', 'Hours', 'Status']]
       body = rows.map(r => [
-        r.employeeName || '—',
-        r.checkIn || '—',
-        r.checkOut || '—',
-        r.workingHours?.toString() || '—',
+        r.employee_name || '—',
+        r.date || '—',
+        r.check_in || '—',
+        r.check_out || '—',
+        r.working_hours?.toString() || '—',
         r.status || '—'
       ])
       break
     case 'monthly':
-      head = [['Employee', 'Days Present', 'Total Hours', 'Status']]
+      head = [['Employee', 'Present', 'Late', 'WFH', 'Leave', 'Total Hours']]
       body = rows.map(r => [
-        r.employeeName || '—',
-        r.days ? `${r.days} days` : '—',
-        r.workingHours?.toString() || '—',
-        r.status || '—'
+        r.employee_name || '—',
+        r.present_days?.toString() || '0',
+        r.late_days?.toString() || '0',
+        r.wfh_days?.toString() || '0',
+        r.leave_days?.toString() || '0',
+        r.total_working_hours?.toString() || '—'
       ])
       break
     case 'leave':
-      head = [['Employee', 'Leave Type', 'Date Range', 'Days', 'Status']]
+      head = [['Employee', 'Leave Type', 'Start Date', 'End Date', 'Days', 'Status']]
       body = rows.map(r => [
-        r.employeeName || '—',
-        r.leaveType || '—',
-        r.date || '—',
+        r.employee_name || '—',
+        r.leave_type || '—',
+        r.start_date || '—',
+        r.end_date || '—',
         r.days ? `${r.days}d` : '—',
         r.status || '—'
       ])
       break
     case 'wfh':
-      head = [['Employee', 'Date', 'Date Range', 'Days', 'Reason', 'Status']]
+      head = [['Employee', 'Date', 'Reason', 'Status']]
       body = rows.map(r => [
-        r.employeeName || '—',
+        r.employee_name || '—',
         r.date || '—',
-        r.date || '—', // In LeaveWFHTable, both 'Date' and 'Date Range' map to r.date for WFH
-        r.days ? `${r.days}d` : '—',
         r.reason || '—',
         r.status || '—'
       ])
       break
     case 'late':
-      head = [['Employee', 'Date', 'Check In', 'Reason']]
+      head = [['Employee', 'Department', 'Date', 'Check In', 'Reason']]
       body = rows.map(r => [
-        r.employeeName || '—',
+        r.employee_name || '—',
+        r.department || '—',
         r.date || '—',
-        r.checkIn || '—',
-        r.reason || '—'
+        r.check_in || '—',
+        r.late_reason || '—'
       ])
       break
   }

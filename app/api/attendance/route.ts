@@ -21,7 +21,7 @@ export async function GET(request: NextRequest) {
 
     let query = supabase
       .from('attendance')
-      .select('*, profiles(full_name, employee_id, department)')
+      .select('*, profile:profiles(full_name, employee_id, department)')
       .order('date', { ascending: false })
 
     if (!isAdmin) {

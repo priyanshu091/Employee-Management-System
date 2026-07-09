@@ -81,7 +81,7 @@ export default function AttendanceCalendar({ size = 'compact', attendanceData = 
 
   const isWeekend = (cellIndex: number) => {
     const dayOfWeek = cellIndex % 7 // 0=Mon ... 5=Sat, 6=Sun
-    return dayOfWeek === 5 || dayOfWeek === 6
+    return dayOfWeek === 6
   }
 
   return (

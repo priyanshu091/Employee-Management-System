@@ -67,18 +67,12 @@ export async function getPendingRequests(): Promise<{
   wfh: WFHRequestWithProfile[]
   correction: CorrectionRequestWithProfile[]
 }> {
-  const [leaveRes, wfhRes, corrRes] = await Promise.all([
-    fetch('/api/leave?admin=true&status=pending'),
-    fetch('/api/wfh?admin=true&status=pending'),
-    fetch('/api/correction?admin=true&status=pending'),
-  ])
-  const [leave, wfh, correction] = await Promise.all([
-    leaveRes.json(), wfhRes.json(), corrRes.json(),
-  ])
+  const res = await fetch('/api/admin/requests/pending')
+  const json = await res.json()
   return {
-    leave: leave.data ?? [],
-    wfh: wfh.data ?? [],
-    correction: correction.data ?? [],
+    leave: json.data?.leave ?? [],
+    wfh: json.data?.wfh ?? [],
+    correction: json.data?.correction ?? [],
   }
 }
 

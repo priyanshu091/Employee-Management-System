@@ -5,7 +5,9 @@ export async function GET(request: NextRequest) {
   try {
     const supabase = await createClient()
     const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
+    if (authError || !user) {
+      return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
+    }
 
     const url = new URL(request.url)
     const isAdminQuery = url.searchParams.get('admin') === 'true'
@@ -13,7 +15,8 @@ export async function GET(request: NextRequest) {
 
     if (isAdminQuery) {
       const { data: caller } = await supabase
-        .from('profiles').select('role').eq('id', user.id).single()
+        .from('profiles').select('role').eq('id', user.id).maybeSingle()
+      
       if (caller?.role !== 'admin') {
         return NextResponse.json({ data: null, error: 'Forbidden' }, { status: 403 })
       }
@@ -22,7 +25,10 @@ export async function GET(request: NextRequest) {
         .from('correction_requests')
         .select('*, profiles(full_name, employee_id, avatar_url)')
         .order('created_at', { ascending: false })
-      if (statusFilter && statusFilter !== 'all') query = query.eq('status', statusFilter)
+      
+      if (statusFilter && statusFilter !== 'all') {
+        query = query.eq('status', statusFilter)
+      }
 
       const { data, error } = await query
       if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
@@ -37,7 +43,8 @@ export async function GET(request: NextRequest) {
 
     if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
     return NextResponse.json({ data, error: null })
-  } catch {
+  } catch (err) {
+    console.error('[GET /api/correction] Unexpected error:', err)
     return NextResponse.json({ data: null, error: 'Internal server error' }, { status: 500 })
   }
 }
@@ -45,19 +52,33 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const supabase = await createClient()
-    const { data: { user }, error: authError } = await supabase.auth.getUser()
-    if (authError || !user) return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
 
-    const { date, reason, requested_check_in, requested_check_out } = await request.json()
+    const { data: { user }, error: authError } = await supabase.auth.getUser()
+    if (authError || !user) {
+      return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const { data: profile, error: profileError } = await supabase
+      .from('profiles')
+      .select('id, role, employee_id')
+      .eq('id', user.id)
+      .maybeSingle()
+
+    if (profileError || !profile) {
+      return NextResponse.json({ data: null, error: 'Profile not found' }, { status: 404 })
+    }
+
+    const body = await request.json()
+    const { date, reason, requested_check_in, requested_check_out } = body
 
     if (!date || !reason?.trim()) {
       return NextResponse.json({ data: null, error: 'Date and reason are required.' }, { status: 400 })
     }
 
-    const { data, error } = await supabase
+    const { data, error: insertError } = await supabase
       .from('correction_requests')
       .insert({
-        employee_id: user.id,
+        employee_id: profile.id,
         date,
         reason: reason.trim(),
         requested_check_in: requested_check_in || null,
@@ -67,9 +88,14 @@ export async function POST(request: NextRequest) {
       .select()
       .single()
 
-    if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
+    if (insertError) {
+      console.error('[POST /api/correction] Insert error:', insertError)
+      return NextResponse.json({ data: null, error: insertError.message }, { status: 500 })
+    }
+
     return NextResponse.json({ data, error: null }, { status: 201 })
-  } catch {
+  } catch (err) {
+    console.error('[POST /api/correction] Unexpected error:', err)
     return NextResponse.json({ data: null, error: 'Internal server error' }, { status: 500 })
   }
 }

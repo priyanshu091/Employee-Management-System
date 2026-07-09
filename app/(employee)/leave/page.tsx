@@ -7,6 +7,7 @@ import PageHeader from '@/components/shared/PageHeader'
 import FullRequestCard from '@/components/employee/FullRequestCard'
 import ApplyLeaveModal from '@/components/employee/ApplyLeaveModal'
 import EmptyState from '@/components/shared/EmptyState'
+import PageLoader from '@/components/shared/PageLoader'
 import { useToast } from '@/components/shared/Toast'
 import type { LeaveRequest } from '@/types'
 
@@ -74,7 +75,9 @@ export default function LeavePage() {
           action={{ label: '+ Apply for leave', onClick: () => setShowModal(true) }}
         />
 
-        {!loading && requests.length === 0 ? (
+        {loading ? (
+          <PageLoader />
+        ) : requests.length === 0 ? (
           <EmptyState
             icon={Umbrella}
             heading="No leave requests yet"

@@ -7,6 +7,7 @@ import PageHeader from '@/components/shared/PageHeader'
 import FullRequestCard from '@/components/employee/FullRequestCard'
 import ApplyCorrectionModal from '@/components/employee/ApplyCorrectionModal'
 import EmptyState from '@/components/shared/EmptyState'
+import PageLoader from '@/components/shared/PageLoader'
 import { useToast } from '@/components/shared/Toast'
 import type { CorrectionRequest } from '@/types'
 
@@ -72,7 +73,9 @@ export default function CorrectionPage() {
           action={{ label: '+ Request correction', onClick: () => setShowModal(true) }}
         />
 
-        {!loading && requests.length === 0 ? (
+        {loading ? (
+          <PageLoader />
+        ) : requests.length === 0 ? (
           <EmptyState
             icon={FileEdit}
             heading="No correction requests"

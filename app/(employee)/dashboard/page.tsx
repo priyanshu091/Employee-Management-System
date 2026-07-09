@@ -6,6 +6,7 @@ import EmployeeTopbar from '@/components/employee/EmployeeTopbar'
 import CheckInCard from '@/components/employee/CheckInCard'
 import AttendanceCalendar from '@/components/employee/AttendanceCalendar'
 import RequestCard from '@/components/employee/RequestCard'
+import PageLoader from '@/components/shared/PageLoader'
 import { getGreeting } from '@/lib/utils/time'
 import {
   getMyProfile,
@@ -22,6 +23,7 @@ export default function DashboardPage() {
   const [leaveReqs, setLeaveReqs] = useState<LeaveRequest[]>([])
   const [wfhReqs, setWFHReqs] = useState<WFHRequest[]>([])
   const [attendance, setAttendance] = useState<Attendance[]>([])
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     Promise.all([
@@ -36,6 +38,7 @@ export default function DashboardPage() {
       setLeaveReqs(leave)
       setWFHReqs(wfh)
       setAttendance(att)
+      setLoading(false)
     })
   }, [])
 
@@ -70,7 +73,11 @@ export default function DashboardPage() {
       <EmployeeTopbar title={`${greeting}, ${name}`} />
 
       <main className="flex-1 p-5">
-        <CheckInCard />
+        {loading ? (
+          <PageLoader />
+        ) : (
+          <>
+            <CheckInCard />
 
         {/* Stats */}
         <div className="grid grid-cols-4 gap-3 mb-4">
@@ -103,6 +110,8 @@ export default function DashboardPage() {
             )}
           </div>
         </div>
+        </>
+        )}
       </main>
     </>
   )

@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import EmployeeTopbar from '@/components/employee/EmployeeTopbar'
 import AttendanceFilterBar from '@/components/employee/AttendanceFilterBar'
+import PageLoader from '@/components/shared/PageLoader'
 import AttendanceCalendar from '@/components/employee/AttendanceCalendar'
 import AttendanceTable from '@/components/employee/AttendanceTable'
 import DayDetailModal from '@/components/employee/DayDetailModal'
@@ -53,8 +54,14 @@ export default function AttendancePage() {
           onStatusChange={setSelectedStatus}
         />
 
-        {/* Summary strip */}
-        <div className="bg-white border border-[#E5E7EB] rounded-xl px-4 py-3 flex flex-wrap gap-5 mb-4">
+        {loading ? (
+          <div className="mt-8">
+            <PageLoader />
+          </div>
+        ) : (
+          <>
+            {/* Summary strip */}
+            <div className="bg-white border border-[#E5E7EB] rounded-xl px-4 py-3 flex flex-wrap gap-5 mb-4">
           {[
             { label: 'Present', color: '#16A34A', status: 'present' },
             { label: 'Late',    color: '#D97706', status: 'late'    },
@@ -89,6 +96,8 @@ export default function AttendancePage() {
             onRowClick={handleDayClick}
           />
         </div>
+        </>
+        )}
       </main>
 
       {/* Day detail modal */}

@@ -7,6 +7,7 @@ import PageHeader from '@/components/shared/PageHeader'
 import FullRequestCard from '@/components/employee/FullRequestCard'
 import ApplyWFHModal from '@/components/employee/ApplyWFHModal'
 import EmptyState from '@/components/shared/EmptyState'
+import PageLoader from '@/components/shared/PageLoader'
 import { useToast } from '@/components/shared/Toast'
 import type { WFHRequest } from '@/types'
 
@@ -54,7 +55,9 @@ export default function WFHPage() {
           action={{ label: '+ Request WFH', onClick: () => setShowModal(true) }}
         />
 
-        {!loading && requests.length === 0 ? (
+        {loading ? (
+          <PageLoader />
+        ) : requests.length === 0 ? (
           <EmptyState
             icon={Home}
             heading="No WFH requests yet"

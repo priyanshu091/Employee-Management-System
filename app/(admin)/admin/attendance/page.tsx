@@ -11,11 +11,23 @@ import { exportReportToExcel } from '@/lib/export/excel'
 import type { AttendanceStatus } from '@/types'
 import type { AttendanceWithProfile } from '@/types'
 
-const MONTH_OPTIONS = [
-  { value: 'all', label: 'All dates' },
-  { value: '2026-07', label: 'July 2026' },
-  { value: '2026-06', label: 'June 2026' },
-]
+// ── Dynamic month options — no hardcoded dates ────────────────────────────────
+function generateMonthOptions() {
+  const options: { value: string; label: string }[] = [
+    { value: 'all', label: 'All dates' },
+  ]
+  const now = new Date()
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    options.push({
+      value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      label: d.toLocaleString('en-IN', { month: 'long', year: 'numeric' }),
+    })
+  }
+  return options
+}
+
+const MONTH_OPTIONS = generateMonthOptions()
 
 const STATUS_OPTIONS = [
   { value: 'all', label: 'All statuses' },
@@ -28,10 +40,10 @@ const STATUS_OPTIONS = [
 
 const SUMMARY_STATS: { label: string; status: AttendanceStatus; color: string }[] = [
   { label: 'Present', status: 'present', color: '#16A34A' },
-  { label: 'Late', status: 'late', color: '#D97706' },
-  { label: 'Absent', status: 'absent', color: '#DC2626' },
-  { label: 'WFH', status: 'wfh', color: '#2563EB' },
-  { label: 'Leave', status: 'leave', color: '#7C3AED' },
+  { label: 'Late',    status: 'late',    color: '#D97706' },
+  { label: 'Absent',  status: 'absent',  color: '#DC2626' },
+  { label: 'WFH',    status: 'wfh',     color: '#2563EB' },
+  { label: 'Leave',  status: 'leave',   color: '#7C3AED' },
 ]
 
 export default function AdminAttendancePage() {
@@ -86,7 +98,7 @@ export default function AdminAttendancePage() {
                 try {
                   exportReportToExcel('attendance', filtered, `Attendance_Export_${new Date().toISOString().split('T')[0]}`)
                   showToast('Excel exported successfully.', 'success')
-                } catch (err) {
+                } catch {
                   showToast('Failed to export Excel.', 'error')
                 }
               }}

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, FormEvent } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, FormEvent, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 
 function Spinner() {
   return (
@@ -12,8 +12,11 @@ function Spinner() {
   )
 }
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const errorParam = searchParams.get('error')
+
   const [email, setEmail] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
@@ -68,6 +71,15 @@ export default function LoginPage() {
               Startup Attendance System
             </p>
           </div>
+
+          {/* FIX 4: Deactivated account warning */}
+          {errorParam === 'inactive' && (
+            <div className="bg-[#FEF2F2] border border-[#DC2626]/20 rounded-lg p-3 mb-4">
+              <p className="text-[13px] text-[#DC2626]">
+                Your account has been deactivated. Please contact your administrator.
+              </p>
+            </div>
+          )}
 
           {/* Form */}
           <form onSubmit={handleSubmit} noValidate>
@@ -128,5 +140,13 @@ export default function LoginPage() {
         </div>
       </div>
     </main>
+  )
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
   )
 }

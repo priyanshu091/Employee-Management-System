@@ -4,115 +4,26 @@ import { BarChart2, FileText, Table } from 'lucide-react'
 import StatusBadge from '@/components/shared/StatusBadge'
 import Avatar from '@/components/shared/Avatar'
 import { useToast } from '@/components/shared/Toast'
-import { type ReportRow, type ReportType } from '@/lib/mock/reports'
+import { type ReportType } from '@/lib/mock/reports'
 import { exportReportToPDF } from '@/lib/export/pdf'
 import { exportReportToExcel } from '@/lib/export/excel'
 
 interface ReportPreviewProps {
   type: ReportType | null
-  rows: ReportRow[]
-  label: string          // e.g. "Daily Attendance — 8 Jul 2026"
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  rows: any[]
+  label: string
   generated: boolean
 }
 
-function DailyTable({ rows }: { rows: ReportRow[] }) {
+// ── Daily / Employee table ────────────────────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function DailyTable({ rows }: { rows: any[] }) {
   return (
     <table className="w-full min-w-[600px]">
       <thead>
         <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-          {['Employee', 'Check In', 'Check Out', 'Hours', 'Status'].map((col) => (
-            <th key={col} className="px-4 py-3 text-left text-[11px] font-medium text-[#6B7280] uppercase tracking-wide">{col}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((r) => (
-          <tr key={r.employeeId} className="border-b border-[#F3F4F6] hover:bg-[#FAFAFA]">
-            <td className="px-4 py-3">
-              <div className="flex items-center gap-2">
-                <Avatar name={r.employeeName} size="sm" />
-                <div>
-                  <p className="text-[13px] font-medium text-[#111827]">{r.employeeName}</p>
-                  <p className="text-[10px] text-[#9CA3AF] font-mono">{r.employeeId}</p>
-                </div>
-              </div>
-            </td>
-            <td className="px-4 py-3 text-[13px] text-[#6B7280]">{r.checkIn || '—'}</td>
-            <td className="px-4 py-3 text-[13px] text-[#6B7280]">{r.checkOut || '—'}</td>
-            <td className="px-4 py-3 text-[13px] font-medium text-[#111827]">{r.workingHours || '—'}</td>
-            <td className="px-4 py-3">{r.status && <StatusBadge variant={r.status} />}</td>
-          </tr>
-        ))}
-        {/* Summary row */}
-        <tr className="bg-[#F9FAFB] border-t border-[#E5E7EB]">
-          <td className="px-4 py-3 text-[12px] font-semibold text-[#111827]">Total: {rows.length} employees</td>
-          <td colSpan={2} />
-          <td className="px-4 py-3 text-[12px] font-semibold text-[#111827]">
-            {rows.filter(r => r.status === 'present' || r.status === 'late' || r.status === 'wfh').length} present
-          </td>
-          <td className="px-4 py-3 text-[12px] font-semibold text-[#111827]">
-            {rows.filter(r => r.status === 'absent').length} absent
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  )
-}
-
-function MonthlyTable({ rows }: { rows: ReportRow[] }) {
-  return (
-    <table className="w-full min-w-[500px]">
-      <thead>
-        <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-          {['Employee', 'Days Present', 'Total Hours', 'Status'].map((col) => (
-            <th key={col} className="px-4 py-3 text-left text-[11px] font-medium text-[#6B7280] uppercase tracking-wide">{col}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((r) => (
-          <tr key={r.employeeId} className="border-b border-[#F3F4F6] hover:bg-[#FAFAFA]">
-            <td className="px-4 py-3">
-              <div className="flex items-center gap-2">
-                <Avatar name={r.employeeName} size="sm" />
-                <div>
-                  <p className="text-[13px] font-medium text-[#111827]">{r.employeeName}</p>
-                  <p className="text-[10px] text-[#9CA3AF] font-mono">{r.employeeId}</p>
-                </div>
-              </div>
-            </td>
-            <td className="px-4 py-3 text-[13px] font-medium text-[#111827]">{r.days} days</td>
-            <td className="px-4 py-3 text-[13px] text-[#6B7280]">{r.workingHours}</td>
-            <td className="px-4 py-3">{r.status && <StatusBadge variant={r.status} />}</td>
-          </tr>
-        ))}
-        <tr className="bg-[#F9FAFB] border-t border-[#E5E7EB]">
-          <td className="px-4 py-3 text-[12px] font-semibold text-[#111827]">{rows.length} employees</td>
-          <td className="px-4 py-3 text-[12px] font-semibold text-[#111827]">
-            Avg {Math.round(rows.reduce((a, r) => a + (r.days ?? 0), 0) / rows.length)} days
-          </td>
-          <td colSpan={2} />
-        </tr>
-      </tbody>
-    </table>
-  )
-}
-
-function LeaveWFHTable({ rows, isWFH }: { rows: ReportRow[]; isWFH?: boolean }) {
-  const columns = [
-    'Employee',
-    isWFH ? 'Date' : 'Leave Type',
-    'Date Range',
-    'Days',
-    isWFH ? 'Reason' : '',
-    'Status',
-  ].filter(Boolean)
-
-  return (
-    <table className="w-full min-w-[580px]">
-      <thead>
-        <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-          {columns.map((col) => (
+          {['Employee', 'Date', 'Check In', 'Check Out', 'Hours', 'Status'].map((col) => (
             <th key={col} className="px-4 py-3 text-left text-[11px] font-medium text-[#6B7280] uppercase tracking-wide">{col}</th>
           ))}
         </tr>
@@ -122,32 +33,115 @@ function LeaveWFHTable({ rows, isWFH }: { rows: ReportRow[]; isWFH?: boolean }) 
           <tr key={i} className="border-b border-[#F3F4F6] hover:bg-[#FAFAFA]">
             <td className="px-4 py-3">
               <div className="flex items-center gap-2">
-                <Avatar name={r.employeeName} size="sm" />
-                <p className="text-[13px] font-medium text-[#111827]">{r.employeeName}</p>
+                <Avatar name={r.employee_name} size="sm" />
+                <div>
+                  <p className="text-[13px] font-medium text-[#111827]">{r.employee_name}</p>
+                  <p className="text-[10px] text-[#9CA3AF] font-mono">{r.employee_id}</p>
+                </div>
               </div>
             </td>
-            {!isWFH && <td className="px-4 py-3 text-[13px] text-[#6B7280]">{r.leaveType}</td>}
             <td className="px-4 py-3 text-[13px] text-[#6B7280]">{r.date}</td>
+            <td className="px-4 py-3 text-[13px] text-[#6B7280]">{r.check_in || '--'}</td>
+            <td className="px-4 py-3 text-[13px] text-[#6B7280]">{r.check_out || '--'}</td>
+            <td className="px-4 py-3 text-[13px] font-medium text-[#111827]">{r.working_hours || '--'}</td>
+            <td className="px-4 py-3">{r.status && <StatusBadge variant={r.status} />}</td>
+          </tr>
+        ))}
+        <tr className="bg-[#F9FAFB] border-t border-[#E5E7EB]">
+          <td className="px-4 py-3 text-[12px] font-semibold text-[#111827]">Total: {rows.length} records</td>
+          <td colSpan={5} />
+        </tr>
+      </tbody>
+    </table>
+  )
+}
+
+// ── Monthly table ─────────────────────────────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function MonthlyTable({ rows }: { rows: any[] }) {
+  return (
+    <table className="w-full min-w-[600px]">
+      <thead>
+        <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+          {['Employee', 'Dept', 'Present', 'Late', 'WFH', 'Leave', 'Total Hours'].map((col) => (
+            <th key={col} className="px-4 py-3 text-left text-[11px] font-medium text-[#6B7280] uppercase tracking-wide">{col}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r, i) => (
+          <tr key={i} className="border-b border-[#F3F4F6] hover:bg-[#FAFAFA]">
+            <td className="px-4 py-3">
+              <div className="flex items-center gap-2">
+                <Avatar name={r.employee_name} size="sm" />
+                <div>
+                  <p className="text-[13px] font-medium text-[#111827]">{r.employee_name}</p>
+                  <p className="text-[10px] text-[#9CA3AF] font-mono">{r.employee_id}</p>
+                </div>
+              </div>
+            </td>
+            <td className="px-4 py-3 text-[13px] text-[#6B7280]">{r.department}</td>
+            <td className="px-4 py-3 text-[13px] font-medium text-[#111827]">{r.present_days}</td>
+            <td className="px-4 py-3 text-[13px] text-[#D97706] font-medium">{r.late_days}</td>
+            <td className="px-4 py-3 text-[13px] text-[#2563EB] font-medium">{r.wfh_days}</td>
+            <td className="px-4 py-3 text-[13px] text-[#7C3AED] font-medium">{r.leave_days}</td>
+            <td className="px-4 py-3 text-[13px] font-medium text-[#111827]">{r.total_working_hours}</td>
+          </tr>
+        ))}
+        <tr className="bg-[#F9FAFB] border-t border-[#E5E7EB]">
+          <td className="px-4 py-3 text-[12px] font-semibold text-[#111827]">{rows.length} employees</td>
+          <td colSpan={6} />
+        </tr>
+      </tbody>
+    </table>
+  )
+}
+
+// ── Leave table ───────────────────────────────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function LeaveTable({ rows }: { rows: any[] }) {
+  return (
+    <table className="w-full min-w-[580px]">
+      <thead>
+        <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+          {['Employee', 'Leave Type', 'Start', 'End', 'Days', 'Status'].map((col) => (
+            <th key={col} className="px-4 py-3 text-left text-[11px] font-medium text-[#6B7280] uppercase tracking-wide">{col}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r, i) => (
+          <tr key={i} className="border-b border-[#F3F4F6] hover:bg-[#FAFAFA]">
+            <td className="px-4 py-3">
+              <div className="flex items-center gap-2">
+                <Avatar name={r.employee_name} size="sm" />
+                <p className="text-[13px] font-medium text-[#111827]">{r.employee_name}</p>
+              </div>
+            </td>
+            <td className="px-4 py-3 text-[13px] text-[#6B7280]">{r.leave_type}</td>
+            <td className="px-4 py-3 text-[13px] text-[#6B7280]">{r.start_date}</td>
+            <td className="px-4 py-3 text-[13px] text-[#6B7280]">{r.end_date}</td>
             <td className="px-4 py-3 text-[13px] font-medium text-[#111827]">{r.days}d</td>
-            {isWFH && <td className="px-4 py-3 text-[13px] text-[#6B7280] max-w-[150px] truncate">{r.reason}</td>}
             <td className="px-4 py-3">{r.status && <StatusBadge variant={r.status} />}</td>
           </tr>
         ))}
         <tr className="bg-[#F9FAFB] border-t border-[#E5E7EB]">
           <td className="px-4 py-3 text-[12px] font-semibold text-[#111827]">{rows.length} requests</td>
-          <td colSpan={10} />
+          <td colSpan={5} />
         </tr>
       </tbody>
     </table>
   )
 }
 
-function LateTable({ rows }: { rows: ReportRow[] }) {
+// ── WFH table ─────────────────────────────────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function WFHTable({ rows }: { rows: any[] }) {
   return (
-    <table className="w-full min-w-[560px]">
+    <table className="w-full min-w-[500px]">
       <thead>
         <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
-          {['Employee', 'Date', 'Check In', 'Reason'].map((col) => (
+          {['Employee', 'Date', 'Reason', 'Status'].map((col) => (
             <th key={col} className="px-4 py-3 text-left text-[11px] font-medium text-[#6B7280] uppercase tracking-wide">{col}</th>
           ))}
         </tr>
@@ -157,20 +151,58 @@ function LateTable({ rows }: { rows: ReportRow[] }) {
           <tr key={i} className="border-b border-[#F3F4F6] hover:bg-[#FAFAFA]">
             <td className="px-4 py-3">
               <div className="flex items-center gap-2">
-                <Avatar name={r.employeeName} size="sm" />
-                <p className="text-[13px] font-medium text-[#111827]">{r.employeeName}</p>
+                <Avatar name={r.employee_name} size="sm" />
+                <p className="text-[13px] font-medium text-[#111827]">{r.employee_name}</p>
               </div>
             </td>
             <td className="px-4 py-3 text-[13px] text-[#6B7280]">{r.date}</td>
+            <td className="px-4 py-3 text-[13px] text-[#6B7280] max-w-[200px] truncate">{r.reason}</td>
+            <td className="px-4 py-3">{r.status && <StatusBadge variant={r.status} />}</td>
+          </tr>
+        ))}
+        <tr className="bg-[#F9FAFB] border-t border-[#E5E7EB]">
+          <td className="px-4 py-3 text-[12px] font-semibold text-[#111827]">{rows.length} requests</td>
+          <td colSpan={3} />
+        </tr>
+      </tbody>
+    </table>
+  )
+}
+
+// ── Late table ────────────────────────────────────────────────────────────────
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function LateTable({ rows }: { rows: any[] }) {
+  return (
+    <table className="w-full min-w-[560px]">
+      <thead>
+        <tr className="bg-[#F9FAFB] border-b border-[#E5E7EB]">
+          {['Employee', 'Dept', 'Date', 'Check In', 'Reason'].map((col) => (
+            <th key={col} className="px-4 py-3 text-left text-[11px] font-medium text-[#6B7280] uppercase tracking-wide">{col}</th>
+          ))}
+        </tr>
+      </thead>
+      <tbody>
+        {rows.map((r, i) => (
+          <tr key={i} className="border-b border-[#F3F4F6] hover:bg-[#FAFAFA]">
             <td className="px-4 py-3">
-              <span className="text-[12px] font-medium text-[#D97706] bg-[#FFFBEB] px-2 py-0.5 rounded-full">{r.checkIn}</span>
+              <div className="flex items-center gap-2">
+                <Avatar name={r.employee_name} size="sm" />
+                <p className="text-[13px] font-medium text-[#111827]">{r.employee_name}</p>
+              </div>
             </td>
-            <td className="px-4 py-3 text-[13px] text-[#6B7280]">{r.reason || '—'}</td>
+            <td className="px-4 py-3 text-[13px] text-[#6B7280]">{r.department}</td>
+            <td className="px-4 py-3 text-[13px] text-[#6B7280]">{r.date}</td>
+            <td className="px-4 py-3">
+              <span className="text-[12px] font-medium text-[#D97706] bg-[#FFFBEB] px-2 py-0.5 rounded-full">
+                {r.check_in}
+              </span>
+            </td>
+            <td className="px-4 py-3 text-[13px] text-[#6B7280]">{r.late_reason || '--'}</td>
           </tr>
         ))}
         <tr className="bg-[#F9FAFB] border-t border-[#E5E7EB]">
           <td className="px-4 py-3 text-[12px] font-semibold text-[#111827]">{rows.length} late instances</td>
-          <td colSpan={3} />
+          <td colSpan={4} />
         </tr>
       </tbody>
     </table>
@@ -203,6 +235,15 @@ export default function ReportPreview({ type, rows, label, generated }: ReportPr
     )
   }
 
+  if (generated && rows.length === 0) {
+    return (
+      <div className="bg-white border border-[#E5E7EB] rounded-xl flex flex-col items-center justify-center py-24">
+        <BarChart2 size={40} className="text-[#D1D5DB]" strokeWidth={1.5} />
+        <p className="text-[13px] text-[#6B7280] mt-3">No records found for the selected filters.</p>
+      </div>
+    )
+  }
+
   return (
     <div className="bg-white border border-[#E5E7EB] rounded-xl overflow-hidden">
       {/* Toolbar */}
@@ -230,8 +271,8 @@ export default function ReportPreview({ type, rows, label, generated }: ReportPr
       <div className="overflow-x-auto">
         {(type === 'daily' || type === 'employee') && <DailyTable rows={rows} />}
         {type === 'monthly' && <MonthlyTable rows={rows} />}
-        {type === 'leave' && <LeaveWFHTable rows={rows} />}
-        {type === 'wfh' && <LeaveWFHTable rows={rows} isWFH />}
+        {type === 'leave' && <LeaveTable rows={rows} />}
+        {type === 'wfh' && <WFHTable rows={rows} />}
         {type === 'late' && <LateTable rows={rows} />}
       </div>
     </div>

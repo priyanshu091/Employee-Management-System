@@ -2,6 +2,7 @@
 
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react'
 import { usePathname } from 'next/navigation'
+import type { Notification } from '@/types'
 
 const UnreadContext = createContext<number>(0)
 
@@ -12,9 +13,9 @@ export function UnreadProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     fetch('/api/notifications')
       .then((r) => r.json())
-      .then((json) => {
+      .then((json: { data: Notification[] | null; error: string | null }) => {
         if (json.data) {
-          setUnread(json.data.filter((n: any) => !n.is_read).length)
+          setUnread(json.data.filter((n: Notification) => !n.is_read).length)
         }
       })
       .catch(console.error)

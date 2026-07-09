@@ -16,25 +16,18 @@ import {
 import { cn } from '@/lib/utils/cn'
 import Avatar from '@/components/shared/Avatar'
 import { useSession } from '@/lib/hooks/useSession'
-import { PENDING_REQUESTS } from '@/lib/mock/admin'
 
 interface NavItem {
   label: string
   href: string
   icon: LucideIcon
-  badge?: number
 }
 
 const NAV_MAIN: NavItem[] = [
   { label: 'Dashboard',  href: '/admin/dashboard',  icon: LayoutDashboard },
   { label: 'Employees',  href: '/admin/employees',  icon: Users            },
   { label: 'Attendance', href: '/admin/attendance', icon: CalendarDays     },
-  {
-    label: 'Requests',
-    href: '/admin/requests',
-    icon: Inbox,
-    badge: PENDING_REQUESTS.length,
-  },
+  { label: 'Requests',  href: '/admin/requests',   icon: Inbox            },
 ]
 
 const NAV_MANAGE: NavItem[] = [
@@ -44,7 +37,12 @@ const NAV_MANAGE: NavItem[] = [
   { label: 'Settings',  href: '/admin/settings', icon: Settings     },
 ]
 
-export default function AdminSidebar() {
+interface AdminSidebarProps {
+  isOpen: boolean
+  onClose: () => void
+}
+
+export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const pathname = usePathname()
   const { profile, loading } = useSession()
   const displayName = loading ? '...' : (profile?.full_name ?? 'Admin')
@@ -67,45 +65,59 @@ export default function AdminSidebar() {
       >
         <Icon size={16} strokeWidth={1.75} aria-hidden="true" />
         <span className="flex-1">{item.label}</span>
-        {item.badge ? (
-          <span className="bg-[#DC2626] text-white text-[10px] px-1.5 py-0.5 rounded-full leading-none">
-            {item.badge}
-          </span>
-        ) : null}
       </Link>
     )
   }
 
   return (
-    <aside className="w-[200px] bg-white border-r border-[#E5E7EB] flex flex-col h-screen fixed left-0 top-0 z-30">
-      {/* Logo */}
-      <div className="p-4 border-b border-[#E5E7EB]">
-        <p className="text-[15px] font-semibold text-[#111827]">AttendEase</p>
-        <p className="text-[11px] text-[#6B7280] mt-0.5">Admin Panel</p>
-      </div>
+    <>
+      {/* Mobile overlay backdrop */}
+      {isOpen && (
+        <div
+          className="fixed inset-0 bg-black/40 z-40 lg:hidden"
+          onClick={onClose}
+          aria-hidden="true"
+        />
+      )}
 
-      {/* Nav */}
-      <nav className="flex-1 p-2 overflow-y-auto" aria-label="Admin navigation">
-        {NAV_MAIN.map((item) => <NavLink key={item.href} item={item} />)}
-
-        {/* Section divider */}
-        <p className="text-[10px] text-[#9CA3AF] px-3 mt-4 mb-1 font-medium tracking-wide uppercase">
-          Manage
-        </p>
-
-        {NAV_MANAGE.map((item) => <NavLink key={item.href} item={item} />)}
-      </nav>
-
-      {/* Admin user row */}
-      <div className="p-3 border-t border-[#E5E7EB] flex items-center gap-2">
-        <Avatar name={displayName} size="md" />
-        <div className="min-w-0 flex-1">
-          <p className="text-[12px] font-medium text-[#111827] truncate">{displayName}</p>
-          <span className="inline-block text-[10px] bg-[#FEF2F2] text-[#DC2626] px-2 py-0.5 rounded-full leading-tight mt-0.5">
-            Admin
-          </span>
+      {/* Sidebar */}
+      <aside
+        className={cn(
+          'w-[200px] bg-white border-r border-[#E5E7EB] flex flex-col h-screen fixed left-0 top-0 z-50',
+          'transform transition-transform duration-200',
+          isOpen ? 'translate-x-0' : '-translate-x-full',
+          'lg:translate-x-0'
+        )}
+      >
+        {/* Logo */}
+        <div className="p-4 border-b border-[#E5E7EB]">
+          <p className="text-[15px] font-semibold text-[#111827]">AttendEase</p>
+          <p className="text-[11px] text-[#6B7280] mt-0.5">Admin Panel</p>
         </div>
-      </div>
-    </aside>
+
+        {/* Nav */}
+        <nav className="flex-1 p-2 overflow-y-auto" aria-label="Admin navigation">
+          {NAV_MAIN.map((item) => <NavLink key={item.href} item={item} />)}
+
+          {/* Section divider */}
+          <p className="text-[10px] text-[#9CA3AF] px-3 mt-4 mb-1 font-medium tracking-wide uppercase">
+            Manage
+          </p>
+
+          {NAV_MANAGE.map((item) => <NavLink key={item.href} item={item} />)}
+        </nav>
+
+        {/* Admin user row */}
+        <div className="p-3 border-t border-[#E5E7EB] flex items-center gap-2">
+          <Avatar name={displayName} size="md" />
+          <div className="min-w-0 flex-1">
+            <p className="text-[12px] font-medium text-[#111827] truncate">{displayName}</p>
+            <span className="inline-block text-[10px] bg-[#FEF2F2] text-[#DC2626] px-2 py-0.5 rounded-full leading-tight mt-0.5">
+              Admin
+            </span>
+          </div>
+        </div>
+      </aside>
+    </>
   )
 }

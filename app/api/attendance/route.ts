@@ -83,10 +83,18 @@ export async function PATCH(request: NextRequest) {
       updates.working_hours = Math.round((ms / 1000 / 60 / 60) * 100) / 100
     }
 
-    const { data, error } = await supabase
-      .from('attendance').update(updates).eq('id', id).select().single()
+    // FIX 1: was .single() — replaced with .maybeSingle()
+    const { data: updated, error } = await supabase
+      .from('attendance').update(updates).eq('id', id).select().maybeSingle()
 
     if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
+
+    if (!updated) {
+      return NextResponse.json(
+        { data: null, error: 'Attendance record not found or update failed.' },
+        { status: 404 }
+      )
+    }
 
     await writeAuditLog({
       targetType: 'attendance',
@@ -98,7 +106,7 @@ export async function PATCH(request: NextRequest) {
       reason: reason.trim(),
     })
 
-    return NextResponse.json({ data, error: null })
+    return NextResponse.json({ data: updated, error: null })
   } catch {
     return NextResponse.json({ data: null, error: 'Internal server error' }, { status: 500 })
   }

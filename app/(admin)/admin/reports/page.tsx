@@ -5,16 +5,33 @@ import AdminTopbar from '@/components/admin/AdminTopbar'
 import ReportTypeSelector from '@/components/admin/ReportTypeSelector'
 import ReportFilters, { type ReportFilterValues } from '@/components/admin/ReportFilters'
 import ReportPreview from '@/components/admin/ReportPreview'
-import { getMockRows, REPORT_OPTIONS, type ReportType, type ReportRow } from '@/lib/mock/reports'
+import { REPORT_OPTIONS, type ReportType } from '@/lib/mock/reports'
+import { useToast } from '@/components/shared/Toast'
+
+// ── Dynamic month/year generator — no hardcoded dates ────────────────────────
+export function generateMonthOptions() {
+  const options: { value: string; label: string }[] = []
+  const now = new Date()
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    options.push({
+      value: `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`,
+      label: d.toLocaleString('en-IN', { month: 'long', year: 'numeric' }),
+    })
+  }
+  return options
+}
+
+const now = new Date()
 
 const DEFAULT_FILTERS: ReportFilterValues = {
-  date:        '',
-  month:       6,   // July (0-indexed)
-  year:        2026,
-  department:  'All Departments',
-  employee:    'all',
-  startDate:   '',
-  endDate:     '',
+  date:       '',
+  month:      now.getMonth() + 1,
+  year:       now.getFullYear(),
+  department: 'All Departments',
+  employee:   'all',
+  startDate:  '',
+  endDate:    '',
 }
 
 function buildLabel(type: ReportType, filters: ReportFilterValues): string {
@@ -27,21 +44,55 @@ function buildLabel(type: ReportType, filters: ReportFilterValues): string {
     case 'employee':
       return `${name} — ${filters.startDate || 'Start'} to ${filters.endDate || 'End'}`
     default:
-      return `${name} — ${MONTHS[filters.month]} ${filters.year}`
+      return `${name} — ${MONTHS[filters.month - 1]} ${filters.year}`
   }
 }
 
+function buildQueryParams(type: ReportType, filters: ReportFilterValues): URLSearchParams {
+  const p = new URLSearchParams()
+  switch (type) {
+    case 'daily':
+      if (filters.date) p.set('date', filters.date)
+      break
+    case 'monthly':
+    case 'late':
+      p.set('month', String(filters.month))
+      p.set('year', String(filters.year))
+      if (filters.department !== 'All Departments') p.set('department', filters.department)
+      break
+    case 'employee':
+      if (filters.employee !== 'all') p.set('employee_id', filters.employee)
+      if (filters.startDate) p.set('start_date', filters.startDate)
+      if (filters.endDate) p.set('end_date', filters.endDate)
+      break
+    case 'leave':
+    case 'wfh':
+      if (filters.employee !== 'all') p.set('employee_id', filters.employee)
+      if (filters.startDate) p.set('start_date', filters.startDate)
+      if (filters.endDate) p.set('end_date', filters.endDate)
+      break
+  }
+  return p
+}
+
+function Spinner() {
+  return <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+}
+
 export default function AdminReportsPage() {
+  const { showToast } = useToast()
   const [selectedType, setSelectedType] = useState<ReportType | null>(null)
   const [filters, setFilters]           = useState<ReportFilterValues>(DEFAULT_FILTERS)
   const [generated, setGenerated]       = useState(false)
   const [generating, setGenerating]     = useState(false)
-  const [reportRows, setReportRows]     = useState<ReportRow[]>([])
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const [reportRows, setReportRows]     = useState<any[]>([])
   const [reportLabel, setReportLabel]   = useState('')
 
   const handleTypeChange = (type: ReportType) => {
     setSelectedType(type)
     setGenerated(false)
+    setReportRows([])
   }
 
   const handleFilterChange = (key: keyof ReportFilterValues, value: string | number) => {
@@ -51,16 +102,36 @@ export default function AdminReportsPage() {
 
   const handleGenerate = async () => {
     if (!selectedType) return
-    setGenerating(true)
-    await new Promise((r) => setTimeout(r, 800))
-    setReportRows(getMockRows(selectedType))
-    setReportLabel(buildLabel(selectedType, filters))
-    setGenerated(true)
-    setGenerating(false)
-  }
 
-  function Spinner() {
-    return <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
+    // Validate required fields
+    if (selectedType === 'daily' && !filters.date) {
+      showToast('Please select a date.', 'error')
+      return
+    }
+    if ((selectedType === 'employee' || selectedType === 'leave' || selectedType === 'wfh') && (!filters.startDate || !filters.endDate)) {
+      showToast('Please select a start date and end date.', 'error')
+      return
+    }
+
+    setGenerating(true)
+    try {
+      const params = buildQueryParams(selectedType, filters)
+      const res = await fetch(`/api/reports/${selectedType}?${params.toString()}`)
+      const json = await res.json()
+
+      if (!res.ok || json.error) {
+        showToast(json.error ?? 'Failed to generate report.', 'error')
+        return
+      }
+
+      setReportRows(json.data ?? [])
+      setReportLabel(buildLabel(selectedType, filters))
+      setGenerated(true)
+    } catch {
+      showToast('Failed to generate report.', 'error')
+    } finally {
+      setGenerating(false)
+    }
   }
 
   return (

@@ -1,11 +1,26 @@
 'use client'
 
+import { useEffect, useState } from 'react'
 import { INPUT_CLASS } from '@/components/shared/FormField'
-import { EMPLOYEE_OPTIONS, type ReportType } from '@/lib/mock/reports'
+import { type ReportType } from '@/lib/mock/reports'
+import type { Profile } from '@/types'
 
-const MONTHS = ['January','February','March','April','May','June','July','August','September','October','November','December']
-const YEARS  = [2025, 2026]
-const DEPTS  = ['All Departments', 'Engineering', 'Design', 'Sales', 'Marketing', 'HR']
+const DEPTS = ['All Departments', 'Engineering', 'Design', 'Sales', 'Marketing', 'HR']
+
+// Dynamic: generates last 12 months
+function getMonthOptions() {
+  const opts: { label: string; month: number; year: number }[] = []
+  const now = new Date()
+  for (let i = 0; i < 12; i++) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1)
+    opts.push({
+      label: d.toLocaleString('en-IN', { month: 'long', year: 'numeric' }),
+      month: d.getMonth() + 1,
+      year: d.getFullYear(),
+    })
+  }
+  return opts
+}
 
 export interface ReportFilterValues {
   date: string
@@ -25,6 +40,17 @@ interface ReportFiltersProps {
 
 export default function ReportFilters({ type, values, onChange }: ReportFiltersProps) {
   const labelClass = 'block text-[11px] font-medium text-[#6B7280] mb-1 uppercase tracking-wide'
+  const monthOptions = getMonthOptions()
+  const [employees, setEmployees] = useState<Profile[]>([])
+
+  useEffect(() => {
+    if (type === 'employee' || type === 'leave' || type === 'wfh') {
+      fetch('/api/employees')
+        .then((r) => r.json())
+        .then((json) => setEmployees(json.data ?? []))
+        .catch(console.error)
+    }
+  }, [type])
 
   if (type === 'daily') {
     return (
@@ -50,8 +76,9 @@ export default function ReportFilters({ type, values, onChange }: ReportFiltersP
             onChange={(e) => onChange('employee', e.target.value)}
             className={INPUT_CLASS}
           >
-            {EMPLOYEE_OPTIONS.map((o) => (
-              <option key={o.value} value={o.value}>{o.label}</option>
+            <option value="all">All employees</option>
+            {employees.map((e) => (
+              <option key={e.id} value={e.id}>{e.full_name}</option>
             ))}
           </select>
         </div>
@@ -78,27 +105,67 @@ export default function ReportFilters({ type, values, onChange }: ReportFiltersP
     )
   }
 
-  // monthly | leave | wfh | late
+  if (type === 'leave' || type === 'wfh') {
+    return (
+      <div className="flex flex-col gap-3">
+        <div>
+          <label className={labelClass}>Employee</label>
+          <select
+            value={values.employee}
+            onChange={(e) => onChange('employee', e.target.value)}
+            className={INPUT_CLASS}
+          >
+            <option value="all">All employees</option>
+            {employees.map((e) => (
+              <option key={e.id} value={e.id}>{e.full_name}</option>
+            ))}
+          </select>
+        </div>
+        <div>
+          <label className={labelClass}>Start date</label>
+          <input
+            type="date"
+            value={values.startDate}
+            onChange={(e) => onChange('startDate', e.target.value)}
+            className={INPUT_CLASS}
+          />
+        </div>
+        <div>
+          <label className={labelClass}>End date</label>
+          <input
+            type="date"
+            value={values.endDate}
+            min={values.startDate}
+            onChange={(e) => onChange('endDate', e.target.value)}
+            className={INPUT_CLASS}
+          />
+        </div>
+      </div>
+    )
+  }
+
+  // monthly | late — show month picker + department
   return (
     <div className="flex flex-col gap-3">
       <div>
         <label className={labelClass}>Month</label>
         <select
-          value={values.month}
-          onChange={(e) => onChange('month', Number(e.target.value))}
+          value={`${values.year}-${String(values.month).padStart(2, '0')}`}
+          onChange={(e) => {
+            const [y, m] = e.target.value.split('-')
+            onChange('year', Number(y))
+            onChange('month', Number(m))
+          }}
           className={INPUT_CLASS}
         >
-          {MONTHS.map((m, i) => <option key={m} value={i}>{m}</option>)}
-        </select>
-      </div>
-      <div>
-        <label className={labelClass}>Year</label>
-        <select
-          value={values.year}
-          onChange={(e) => onChange('year', Number(e.target.value))}
-          className={INPUT_CLASS}
-        >
-          {YEARS.map((y) => <option key={y} value={y}>{y}</option>)}
+          {monthOptions.map((o) => (
+            <option
+              key={`${o.year}-${o.month}`}
+              value={`${o.year}-${String(o.month).padStart(2, '0')}`}
+            >
+              {o.label}
+            </option>
+          ))}
         </select>
       </div>
       <div>

@@ -87,7 +87,7 @@ export default function CheckInCard() {
 
     setRecord(json.data)
     setCardState('working')
-    showToast(type === 'wfh' ? 'WFH request sent. Waiting for admin approval.' : 'Checked in successfully!', 'success')
+    showToast(type === 'wfh' ? 'Checked in as Work from Home.' : 'Checked in successfully!', 'success')
   }, [showToast])
 
   const handleCheckOut = useCallback(async () => {

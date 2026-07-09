@@ -123,7 +123,7 @@ export default function AttendanceCalendar({ size = 'compact', attendanceData = 
           const isToday = isCurrentMonth && date === today.getDate()
           const weekend = isWeekend(i)
           const hasData = !!day
-          const clickable = hasData && !isToday
+          const clickable = hasData
 
           return (
             <button
@@ -144,7 +144,7 @@ export default function AttendanceCalendar({ size = 'compact', attendanceData = 
               aria-label={`${date} ${day?.status ?? ''}`}
             >
               {date}
-              {day && !isToday && (
+              {day && (
                 <span
                   className={cn(
                     'absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full',

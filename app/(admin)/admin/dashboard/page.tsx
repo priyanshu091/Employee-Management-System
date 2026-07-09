@@ -58,7 +58,7 @@ export default function AdminDashboardPage() {
 
       <main className="flex-1 p-5">
         {/* Stats row */}
-        <div className="grid grid-cols-6 gap-3 mb-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 mb-4">
           {loading ? (
             Array.from({ length: 6 }).map((_, i) => (
               <div key={i} className="bg-white border border-[#E5E7EB] rounded-xl p-4 h-[76px]">
@@ -79,13 +79,13 @@ export default function AdminDashboardPage() {
         </div>
 
         {/* Main grid: pending requests + who's in office */}
-        <div className="grid grid-cols-[1fr_1.05fr] gap-4 mb-4">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.05fr] gap-4 mb-4">
           <PendingRequestsPanel />
           <WhoIsInOffice rows={inOffice} loading={loading} />
         </div>
 
         {/* Quick actions */}
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <QuickActionCard
             icon={UserPlus}
             iconBg="#EEF2FF"

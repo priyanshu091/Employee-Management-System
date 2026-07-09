@@ -27,6 +27,10 @@ export default function FullRequestCard({
   status,
   extraInfo,
 }: FullRequestCardProps) {
+  const parts = reason.split('. Admin rejection reason: ')
+  const original = parts[0]
+  const rejection = parts.length > 1 ? parts[1] : null
+
   return (
     <div className="bg-white border border-[#E5E7EB] rounded-xl p-4 mb-3 flex items-start gap-4">
       {/* Icon */}
@@ -56,7 +60,17 @@ export default function FullRequestCard({
         <p className="text-[12px] text-[#6B7280] mt-1">{dateRange}</p>
 
         {/* Reason */}
-        <p className="text-[12px] text-[#6B7280] mt-1 truncate">{reason}</p>
+        <div className="mt-1">
+          <p className="text-[12px] text-[#6B7280] truncate">{original}</p>
+          {rejection && (
+            <div className="mt-2 p-2 bg-[#FEF2F2] border border-[#FECACA] rounded-lg">
+              <p className="text-[11px] font-semibold text-[#DC2626]">Rejection Reason:</p>
+              <p className="text-[12px] text-[#991B1B] mt-0.5 leading-relaxed whitespace-pre-wrap">
+                {rejection}
+              </p>
+            </div>
+          )}
+        </div>
 
         {/* Extra info (correction timings) */}
         {extraInfo && (

@@ -22,6 +22,10 @@ export default function RequestCard({
   reason,
   status,
 }: RequestCardProps) {
+  const parts = reason.split('. Admin rejection reason: ')
+  const original = parts[0]
+  const rejection = parts.length > 1 ? parts[1] : null
+
   return (
     <div className="flex items-center gap-3 py-2.5 border-b border-[#F3F4F6] last:border-0">
       {/* Icon */}
@@ -38,7 +42,14 @@ export default function RequestCard({
           <span className="text-[12px] font-medium text-[#111827]">{type}</span>
           <span className="text-[11px] text-[#9CA3AF] flex-shrink-0">{dateRange}</span>
         </div>
-        <p className="text-[11px] text-[#6B7280] truncate mt-0.5">{reason}</p>
+        <p className="text-[11px] text-[#6B7280] truncate mt-0.5">
+          {original}
+          {rejection && (
+            <span className="ml-1.5 font-medium text-[#DC2626] bg-[#FEF2F2] px-1.5 py-0.5 rounded text-[10px]">
+              Admin note: {rejection}
+            </span>
+          )}
+        </p>
       </div>
 
       {/* Status */}

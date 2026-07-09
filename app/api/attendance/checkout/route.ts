@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { getTodayIST } from '@/lib/utils/time'
 
 export async function POST(request: NextRequest) {
@@ -64,8 +65,10 @@ export async function POST(request: NextRequest) {
     ) / 100
 
     // 9. Update the attendance record
-    // Use .eq filters BEFORE .select().maybeSingle()
-    const { data: updated, error: updateError } = await supabase
+    // 9. Update the attendance record using admin client to bypass RLS
+    // (employees typically don't have UPDATE permission on attendance table)
+    const adminClient = createAdminClient()
+    const { data: updated, error: updateError } = await adminClient
       .from('attendance')
       .update({
         check_out: checkOutTime.toISOString(),

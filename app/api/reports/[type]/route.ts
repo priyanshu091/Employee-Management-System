@@ -149,20 +149,25 @@ export async function GET(
       const startDate = url.searchParams.get('start_date')
       const endDate = url.searchParams.get('end_date')
 
-      if (!employeeId || !startDate || !endDate) {
+      if (!startDate || !endDate) {
         return NextResponse.json(
-          { data: null, error: 'employee_id, start_date and end_date params required' },
+          { data: null, error: 'start_date and end_date params required' },
           { status: 400 }
         )
       }
 
-      const { data, error } = await supabase
+      let query = supabase
         .from('attendance')
         .select('*, profile:profiles(full_name, employee_id, department)')
-        .eq('employee_id', employeeId)
         .gte('date', startDate)
         .lte('date', endDate)
         .order('date', { ascending: true })
+
+      if (employeeId && employeeId !== 'all') {
+        query = query.eq('employee_id', employeeId)
+      }
+
+      const { data, error } = await query
 
       if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
 

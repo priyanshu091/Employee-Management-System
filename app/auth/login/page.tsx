@@ -67,7 +67,7 @@ function LoginForm() {
           {/* Logo */}
           <div className="mb-8">
             <h1 className="text-[18px] font-semibold text-[#111827] leading-tight">
-              FeelifyEMS
+              Feelify EMS
             </h1>
             <p className="text-[12px] text-[#6B7280] mt-0.5">
               Startup Attendance System

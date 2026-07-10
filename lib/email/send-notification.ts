@@ -8,7 +8,7 @@ export async function sendNotificationEmail(
 ): Promise<void> {
   try {
     await transporter.sendMail({
-      from: `"FeelifyEMS" <${process.env.GMAIL_USER}>`,
+      from: `"Feelify EMS" <${process.env.GMAIL_USER}>`,
       to,
       subject,
       html: `
@@ -18,7 +18,7 @@ export async function sendNotificationEmail(
           <a href="${process.env.NEXT_PUBLIC_APP_URL}/notifications"
              style="display:inline-block;background:#4F46E5;color:white;padding:10px 20px;
                     border-radius:8px;text-decoration:none;font-size:13px;font-weight:500">
-            View in FeelifyEMS
+            View in Feelify EMS
           </a>
         </div>
       `,

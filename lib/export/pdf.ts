@@ -8,7 +8,7 @@ export function exportReportToPDF(type: ReportType, rows: any[], label: string):
 
   // Header
   doc.setFontSize(18)
-  doc.text('FeelifyEMS', 14, 20)
+  doc.text('Feelify EMS', 14, 20)
   
   doc.setFontSize(12)
   doc.text(label, 14, 30)

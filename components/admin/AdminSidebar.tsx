@@ -106,16 +106,14 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         )}
       >
         {/* Logo */}
-        <div className="p-4 border-b border-[#E5E7EB] flex items-center h-[73px]">
-          {settings?.logo_url ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={settings.logo_url} alt={settings.company_name} className="max-h-full max-w-full object-contain" />
-          ) : (
-            <div>
-              <p className="text-[15px] font-semibold text-[#111827] truncate">{settings?.company_name || 'Feelify EMS'}</p>
-              <p className="text-[11px] text-[#6B7280] mt-0.5 truncate">Admin Panel</p>
-            </div>
+        <div className="h-[72px] flex items-center gap-3 px-6 border-b border-[#E5E7EB]">
+          {settings?.logo_url && (
+            <img src={settings.logo_url} alt={settings.company_name} className="h-8 w-8 object-contain rounded" />
           )}
+          <div className="flex flex-col overflow-hidden">
+            <p className="text-[15px] font-semibold text-[#111827] truncate">{settings?.company_name || 'Feelify EMS'}</p>
+            <p className="text-[11px] text-[#6B7280] mt-0.5 truncate">Admin Panel</p>
+          </div>
         </div>
 
         {/* Nav */}

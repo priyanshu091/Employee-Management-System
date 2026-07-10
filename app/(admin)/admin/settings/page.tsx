@@ -5,7 +5,8 @@ import useSWR from 'swr'
 import AdminTopbar from '@/components/admin/AdminTopbar'
 import FormField, { INPUT_CLASS } from '@/components/shared/FormField'
 import { useToast } from '@/components/shared/Toast'
-import { getSettings, updateSettings } from '@/lib/api/admin'
+import { updateSettings } from '@/lib/api/admin'
+import { useCompanySettings } from '@/lib/hooks/useCompanySettings'
 import { cn } from '@/lib/utils/cn'
 import type { CompanySettings } from '@/types'
 
@@ -50,10 +51,9 @@ export default function AdminSettingsPage() {
   const { showToast } = useToast()
   const [form, setForm] = useState<SettingsForm | null>(null)
   const [saved, setSaved] = useState<SettingsForm | null>(null)
-  const { data, isLoading: loading, mutate } = useSWR('companySettings', getSettings)
+  const { settings: data, loading, mutate } = useCompanySettings()
   const [saving, setSaving] = useState(false)
-  const [logoFile, setLogoFile] = useState<File | null>(null)
-  const [logoPreview, setLogoPreview] = useState<string | null>(null)
+  const [logoUploading, setLogoUploading] = useState(false)
 
   // Initialize form state when data loads
   useEffect(() => {
@@ -64,7 +64,7 @@ export default function AdminSettingsPage() {
     }
   }, [data, form, saved])
 
-  const isDirty = !!logoFile || (form && saved && JSON.stringify(form) !== JSON.stringify(saved))
+  const isDirty = (form && saved && JSON.stringify(form) !== JSON.stringify(saved))
 
   const set = <K extends keyof SettingsForm>(key: K, value: SettingsForm[K]) => {
     setForm((f) => f ? { ...f, [key]: value } : f)
@@ -74,22 +74,6 @@ export default function AdminSettingsPage() {
     if (!form) return
     setSaving(true)
     let newLogoUrl = form.logoUrl
-
-    if (logoFile) {
-      const formData = new FormData()
-      formData.append('file', logoFile)
-      const res = await fetch('/api/settings/logo', {
-        method: 'POST',
-        body: formData,
-      })
-      const json = await res.json()
-      if (json.error) {
-        setSaving(false)
-        showToast(json.error, 'error')
-        return
-      }
-      newLogoUrl = json.data.publicUrl
-    }
 
     const res = await updateSettings({
       company_name: form.companyName,
@@ -109,20 +93,16 @@ export default function AdminSettingsPage() {
       return
     }
     
-    setLogoFile(null)
-    setLogoPreview(null)
     const updatedForm = { ...form, logoUrl: newLogoUrl }
     setSaved(updatedForm)
     setForm(updatedForm)
 
     if (data) mutate({ ...data, ...updatedForm, logo_url: newLogoUrl, office_lat: Number(updatedForm.officeLat), office_lng: Number(updatedForm.officeLng) }, false)
     showToast('Settings saved successfully.', 'success')
-  }, [form, logoFile, showToast, data, mutate])
+  }, [form, showToast, data, mutate])
 
   const handleDiscard = () => {
     if (saved) setForm(saved)
-    setLogoFile(null)
-    setLogoPreview(null)
   }
 
   function Spinner() {
@@ -176,21 +156,53 @@ export default function AdminSettingsPage() {
                 type="file"
                 accept="image/png, image/jpeg, image/webp"
                 className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                onChange={(e) => {
+                onChange={async (e) => {
                   const file = e.target.files?.[0]
                   if (file) {
-                    setLogoFile(file)
-                    setLogoPreview(URL.createObjectURL(file))
+                    const objectUrl = URL.createObjectURL(file)
+                    // Optimistically update
+                    setForm(f => f ? { ...f, logoUrl: objectUrl } : f)
+                    if (data) mutate({ ...data, logo_url: objectUrl }, false)
+                    
+                    setLogoUploading(true)
+                    const formData = new FormData()
+                    formData.append('file', file)
+                    const res = await fetch('/api/settings/logo', {
+                      method: 'POST',
+                      body: formData,
+                    })
+                    const json = await res.json()
+                    setLogoUploading(false)
+                    
+                    if (json.error) {
+                      showToast(json.error, 'error')
+                      // Revert optimism
+                      if (data) mutate(data, false)
+                    } else {
+                      const newLogoUrl = json.data.publicUrl
+                      setForm(f => f ? { ...f, logoUrl: newLogoUrl } : f)
+                      setSaved(s => s ? { ...s, logoUrl: newLogoUrl } : s)
+                      if (data) mutate({ ...data, logo_url: newLogoUrl }, false)
+                    }
                   }
                 }}
               />
-              {logoPreview || form.logoUrl ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img
-                  src={logoPreview || form.logoUrl!}
-                  alt="Company Logo"
-                  className="w-full h-full object-contain p-2"
-                />
+              {form.logoUrl ? (
+                <>
+                  <img
+                    src={form.logoUrl}
+                    alt="Company Logo"
+                    className={cn(
+                      "w-full h-full object-contain p-2 transition-opacity duration-200",
+                      logoUploading ? "opacity-50" : "opacity-100"
+                    )}
+                  />
+                  {logoUploading && (
+                    <div className="absolute inset-0 flex items-center justify-center">
+                      <div className="w-5 h-5 border-2 border-[#4F46E5] border-t-transparent rounded-full animate-spin" />
+                    </div>
+                  )}
+                </>
               ) : (
                 <div className="flex flex-col items-center justify-center gap-1.5 pointer-events-none">
                   <p className="text-[13px] text-[#9CA3AF]">Click to upload logo</p>

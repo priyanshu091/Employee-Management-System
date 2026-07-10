@@ -3,6 +3,9 @@ import './globals.css'
 
 import { createClient } from '@/lib/supabase/server'
 
+export const revalidate = 0
+export const dynamic = 'force-dynamic'
+
 export async function generateMetadata(): Promise<Metadata> {
   const supabase = await createClient()
   const { data: settings } = await supabase

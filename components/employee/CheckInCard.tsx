@@ -18,7 +18,12 @@ function formatWorkingHours(hours: number): string {
   return h > 0 ? `${h}h ${m}m` : `${m}m`
 }
 
-export default function CheckInCard() {
+interface CheckInCardProps {
+  onCheckInSuccess?: () => void
+  onCheckOutSuccess?: () => void
+}
+
+export default function CheckInCard({ onCheckInSuccess, onCheckOutSuccess }: CheckInCardProps = {}) {
   const { showToast } = useToast()
   const [cardState, setCardState] = useState<CardState>('loading')
   const [record, setRecord] = useState<Attendance | null>(null)
@@ -88,7 +93,8 @@ export default function CheckInCard() {
     setRecord(json.data)
     setCardState('working')
     showToast(type === 'wfh' ? 'Checked in as Work from Home.' : 'Checked in successfully!', 'success')
-  }, [showToast])
+    onCheckInSuccess?.()
+  }, [showToast, onCheckInSuccess])
 
   const handleCheckOut = useCallback(async () => {
     const res = await fetch('/api/attendance/checkout', { method: 'POST' })
@@ -102,7 +108,8 @@ export default function CheckInCard() {
     setRecord(json.data)
     setCardState('done')
     showToast('Checked out successfully!', 'success')
-  }, [showToast])
+    onCheckOutSuccess?.()
+  }, [showToast, onCheckOutSuccess])
 
   if (cardState === 'loading') {
     return (

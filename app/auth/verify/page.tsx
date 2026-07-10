@@ -60,10 +60,12 @@ export default function VerifyPage() {
     setHasError(false)
     setErrorMsg('')
 
+    const rememberMe = sessionStorage.getItem('rememberMe') !== 'false'
+
     const res = await fetch('/api/auth/verify-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, otp: code }),
+      body: JSON.stringify({ email, otp: code, rememberMe }),
     })
 
     const json = await res.json()
@@ -79,6 +81,7 @@ export default function VerifyPage() {
     // Success
     setSuccess(true)
     sessionStorage.removeItem('otp_email')
+    sessionStorage.removeItem('rememberMe')
 
     await new Promise((res) => setTimeout(res, 800))
     router.push(json.data.redirectTo)

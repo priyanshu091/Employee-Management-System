@@ -18,6 +18,7 @@ function LoginForm() {
   const errorParam = searchParams.get('error')
 
   const [email, setEmail] = useState('')
+  const [rememberMe, setRememberMe] = useState(true)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
 
@@ -54,6 +55,7 @@ function LoginForm() {
     }
 
     sessionStorage.setItem('otp_email', email)
+    sessionStorage.setItem('rememberMe', rememberMe ? 'true' : 'false')
     router.push('/auth/verify')
   }
 
@@ -65,7 +67,7 @@ function LoginForm() {
           {/* Logo */}
           <div className="mb-8">
             <h1 className="text-[18px] font-semibold text-[#111827] leading-tight">
-              AttendEase
+              FeelifyEMS
             </h1>
             <p className="text-[12px] text-[#6B7280] mt-0.5">
               Startup Attendance System
@@ -116,6 +118,23 @@ function LoginForm() {
                   {error}
                 </p>
               )}
+            </div>
+
+            {/* Remember Me */}
+            <div className="flex items-center gap-2 mb-4">
+              <input
+                type="checkbox"
+                id="rememberMe"
+                checked={rememberMe}
+                onChange={(e) => setRememberMe(e.target.checked)}
+                className="w-4 h-4 rounded border-[#E5E7EB] accent-[#4F46E5] cursor-pointer"
+              />
+              <label
+                htmlFor="rememberMe"
+                className="text-[13px] text-[#6B7280] cursor-pointer select-none"
+              >
+                Remember me
+              </label>
             </div>
 
             <button

@@ -133,4 +133,4 @@ create table company_settings (
 );
 
 -- Insert default company settings row
-insert into company_settings (company_name) values ('AttendEase Corp');
+insert into company_settings (company_name) values ('FeelifyEMS Corp');

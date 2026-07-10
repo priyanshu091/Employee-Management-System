@@ -185,7 +185,7 @@
 ### Verification performed
 - `npm run build` — zero TypeScript errors, all 8 admin routes (`/admin/dashboard`, `/admin/employees`, `/admin/attendance`, `/admin/requests`, `/admin/holidays`, `/admin/reports`, `/admin/audit`, `/admin/settings`) compile as static routes.
 - Ran the dev server and drove `/admin/dashboard` end-to-end with headless Chromium (Playwright), 23-point checklist from the phase prompt:
-  - Sidebar shows "AttendEase / Admin Panel" logo, all 8 nav items with Requests badge (6), MANAGE section divider, active-nav indigo highlight, admin avatar row with red "Admin" badge ✅
+  - Sidebar shows "FeelifyEMS / Admin Panel" logo, all 8 nav items with Requests badge (6), MANAGE section divider, active-nav indigo highlight, admin avatar row with red "Admin" badge ✅
   - All 7 non-dashboard admin routes return HTTP 200 (no 404s) ✅
   - 6 stat cards render with correct colored dots and values matching mock data exactly (24/18/2/3/4/1) ✅
   - Pending requests panel: Leave tab active by default with 3 requests (Rahul Kumar, Sneha Verma, Mohit Jain); switching to WFH (2) and Correction (1) tabs shows correct filtered requests and counts ✅
@@ -391,7 +391,7 @@ The user pasted a Supabase DB password, a "publishable key," and (in a follow-up
 ### Verification performed
 - `npm run build` — zero TypeScript errors; all 9 new API routes compile as dynamic (`ƒ`), all 7 employee pages compile as static.
 - Confirmed no employee-facing file still imports from `lib/mock/attendance.ts` / `lib/mock/requests.ts` / `lib/mock/misc.ts` (only admin-side holidays/settings still reference `lib/mock/misc.ts`, correctly deferred to Phase 9C).
-- Seeded a second, employee-role test profile (`EMP-002`, `role: employee`, `test.employee@attendease.local`) directly via the service-role key, matching the existing Phase 9A seeding pattern.
+- Seeded a second, employee-role test profile (`EMP-002`, `role: employee`, `test.employee@feelifyems.local`) directly via the service-role key, matching the existing Phase 9A seeding pattern.
 - **Employee-side full browser login was intentionally not performed this phase** — Resend's sandbox sender only delivers to the single email address the Resend account owns (established in the Phase 9A troubleshooting session), and the seeded employee's email isn't a real deliverable inbox. Rather than mint and print a live Supabase session token to drive a browser test (which the harness correctly blocked as a credential-exposure risk when first attempted), verification was done at the layer that doesn't require a session:
   - All 7 employee routes hit anonymously returned a clean `307` redirect to login (not a `500`), confirming every rewritten page renders without a server-side crash even before auth resolves.
   - Directly exercised, via the service-role key, the exact insert/update shapes each API route produces against `attendance` (checkin + checkout), `leave_requests`, `wfh_requests`, `correction_requests`, `notifications`, and `profiles` — all five tables accepted the payloads cleanly, confirming schema/route compatibility end-to-end at the data layer.

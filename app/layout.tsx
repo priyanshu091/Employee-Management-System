@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'AttendEase',
+  title: 'FeelifyEMS',
   description: 'Employee Attendance Management System',
 }
 

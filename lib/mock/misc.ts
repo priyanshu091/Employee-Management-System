@@ -127,7 +127,7 @@ export interface CompanySettingsForm {
 }
 
 export const DEFAULT_SETTINGS: CompanySettingsForm = {
-  companyName:          'AttendEase Corp',
+  companyName:          'FeelifyEMS Corp',
   officeAddress:        '12 MG Road, Lucknow, Uttar Pradesh 226001',
   officeLat:            '26.8467',
   officeLng:            '80.9462',

@@ -1,7 +1,8 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
-import { usePathname } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
   Calendar,
@@ -10,6 +11,7 @@ import {
   FileEdit,
   Bell,
   LucideIcon,
+  LogOut,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import Avatar from '@/components/shared/Avatar'
@@ -44,6 +46,18 @@ export default function EmployeeSidebar({ isOpen, onClose }: EmployeeSidebarProp
   const displayName = loading ? '...' : (profile?.full_name ?? 'Employee')
   const { settings } = useCompanySettings()
   const unreadCount = useUnread()
+  const [loggingOut, setLoggingOut] = useState(false)
+  const router = useRouter()
+
+  async function handleLogout() {
+    setLoggingOut(true)
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+    } finally {
+      router.push('/auth/login')
+      router.refresh()
+    }
+  }
 
   return (
     <>
@@ -73,7 +87,7 @@ export default function EmployeeSidebar({ isOpen, onClose }: EmployeeSidebarProp
             <img src={settings.logo_url} alt={settings.company_name} className="max-h-full max-w-full object-contain" />
           ) : (
             <div>
-              <p className="text-[15px] font-semibold text-[#111827] truncate">{settings?.company_name || 'AttendEase'}</p>
+              <p className="text-[15px] font-semibold text-[#111827] truncate">{settings?.company_name || 'FeelifyEMS'}</p>
               <p className="text-[11px] text-[#6B7280] mt-0.5 truncate">Startup Edition</p>
             </div>
           )}
@@ -109,13 +123,33 @@ export default function EmployeeSidebar({ isOpen, onClose }: EmployeeSidebarProp
           })}
         </nav>
 
-        {/* User */}
-        <div className="p-3 border-t border-[#E5E7EB] flex items-center gap-2">
-          <Avatar name={displayName} size="md" />
-          <div className="min-w-0">
-            <p className="text-[12px] font-medium text-[#111827] truncate">{displayName}</p>
-            <p className="text-[10px] text-[#6B7280]">Employee</p>
+        {/* Avatar row — bottom of sidebar */}
+        <div className="p-3 border-t border-[#E5E7EB]">
+          {/* User info row */}
+          <div className="flex items-center gap-2 mb-2">
+            <Avatar name={profile?.full_name ?? ''} size="sm" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-medium text-[#111827] truncate">
+                {profile?.full_name ?? 'Loading...'}
+              </p>
+              <p className="text-[10px] text-[#6B7280] truncate">
+                {profile?.employee_id ?? ''}
+              </p>
+            </div>
           </div>
+
+          {/* Logout button */}
+          <button
+            onClick={handleLogout}
+            disabled={loggingOut}
+            className="w-full flex items-center gap-2 px-3 py-1.5 rounded-lg
+                       text-[12px] text-[#6B7280] hover:bg-[#FEF2F2] 
+                       hover:text-[#DC2626] transition-colors duration-150
+                       disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <LogOut className="w-3.5 h-3.5" />
+            {loggingOut ? 'Signing out...' : 'Sign out'}
+          </button>
         </div>
       </aside>
     </>

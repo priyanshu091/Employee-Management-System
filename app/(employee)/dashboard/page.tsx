@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect, useCallback } from 'react'
 import useSWR from 'swr'
 import { Umbrella, Home } from 'lucide-react'
 import EmployeeTopbar from '@/components/employee/EmployeeTopbar'
@@ -21,7 +22,7 @@ export default function DashboardPage() {
   const currentMonth = new Date().getMonth()
 
   const { data: profile, isLoading: loadingProfile } = useSWR('myProfile', getMyProfile)
-  const { data: stats, isLoading: loadingStats } = useSWR('monthlyStats', getMonthlyStats)
+  const { data: stats, isLoading: loadingStats, mutate: mutateStats } = useSWR('monthlyStats', getMonthlyStats)
   const { data: leaveReqs, isLoading: loadingLeave } = useSWR('myLeaveRequests', getMyLeaveRequests)
   const { data: wfhReqs, isLoading: loadingWfh } = useSWR('myWFHRequests', getMyWFHRequests)
   const { data: attendance, isLoading: loadingAttendance } = useSWR(
@@ -30,6 +31,10 @@ export default function DashboardPage() {
   )
 
   const loading = loadingProfile || loadingStats || loadingLeave || loadingWfh || loadingAttendance
+
+  const fetchStats = useCallback(async () => {
+    await mutateStats()
+  }, [mutateStats])
 
   const greeting = getGreeting()
   const name = profile?.full_name?.split(' ')[0] ?? '...'
@@ -66,7 +71,7 @@ export default function DashboardPage() {
           <PageLoader />
         ) : (
           <>
-            <CheckInCard />
+            <CheckInCard onCheckInSuccess={fetchStats} onCheckOutSuccess={fetchStats} />
 
         {/* Stats */}
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-4">

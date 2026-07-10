@@ -10,6 +10,21 @@ export function getTodayIST(): string {
   return istDate.toISOString().split('T')[0]
 }
 
+export function getCurrentISTTime(): { hours: number; minutes: number } {
+  const now = new Date()
+  const istOffset = 5.5 * 60 * 60 * 1000
+  const istDate = new Date(now.getTime() + istOffset)
+  return {
+    hours: istDate.getUTCHours(),
+    minutes: istDate.getUTCMinutes(),
+  }
+}
+
+export function timeToMinutes(timeStr: string): number {
+  const parts = timeStr.split(':').map(Number)
+  return parts[0] * 60 + parts[1]
+}
+
 export function isLate(
   checkInTime: Date,
   officeStart: string,

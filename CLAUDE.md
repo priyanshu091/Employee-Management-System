@@ -950,12 +950,12 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function sendOTPEmail(email: string, otp: string) {
   await resend.emails.send({
-    from: 'AttendEase <noreply@yourdomain.com>',
+    from: 'FeelifyEMS <noreply@yourdomain.com>',
     to: email,
     subject: 'Your login code',
     html: `
       <div style="font-family:Inter,sans-serif;max-width:400px;margin:0 auto;padding:32px">
-        <h2 style="font-size:18px;font-weight:600;color:#111827;margin-bottom:8px">AttendEase</h2>
+        <h2 style="font-size:18px;font-weight:600;color:#111827;margin-bottom:8px">FeelifyEMS</h2>
         <p style="color:#6B7280;font-size:14px;margin-bottom:24px">Your one-time login code:</p>
         <div style="background:#EEF2FF;border-radius:12px;padding:24px;text-align:center;margin-bottom:24px">
           <span style="font-size:32px;font-weight:700;letter-spacing:8px;color:#4F46E5">${otp}</span>
@@ -977,7 +977,7 @@ export async function sendNotificationEmail(
   message: string
 ) {
   await resend.emails.send({
-    from: 'AttendEase <noreply@yourdomain.com>',
+    from: 'FeelifyEMS <noreply@yourdomain.com>',
     to: email,
     subject,
     html: `
@@ -987,7 +987,7 @@ export async function sendNotificationEmail(
         <a href="${process.env.NEXT_PUBLIC_APP_URL}/notifications"
            style="display:inline-block;margin-top:20px;background:#4F46E5;color:white;
                   padding:10px 20px;border-radius:8px;text-decoration:none;font-size:13px">
-          View in AttendEase
+          View in FeelifyEMS
         </a>
       </div>
     `,
@@ -1182,7 +1182,7 @@ w-[200px] bg-white border-r border-[#E5E7EB] flex flex-col h-screen fixed left-0
 ```
 
 **Logo area** (p-4, border-b):
-- "AttendEase" — 15px, font-semibold, #111827
+- "FeelifyEMS" — 15px, font-semibold, #111827
 - "Startup Edition" or "Admin Panel" — 11px, #6B7280
 
 **Nav items:**

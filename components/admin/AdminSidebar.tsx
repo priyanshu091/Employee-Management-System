@@ -111,7 +111,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
             <img src={settings.logo_url} alt={settings.company_name} className="h-8 w-8 object-contain rounded" />
           )}
           <div className="flex flex-col overflow-hidden">
-            <p className="text-[15px] font-semibold text-[#111827] truncate">{settings?.company_name || 'Feelify EMS'}</p>
+            <p className="text-[14px] font-semibold text-[#111827] line-clamp-2 leading-snug">{settings?.company_name || 'Feelify EMS'}</p>
             <p className="text-[11px] text-[#6B7280] mt-0.5 truncate">Admin Panel</p>
           </div>
         </div>

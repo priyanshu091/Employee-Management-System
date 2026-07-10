@@ -19,6 +19,7 @@ interface SettingsForm {
   officeEndTime: string
   gracePeriodMinutes: number
   attendanceLockTime: string
+  logoUrl: string | null
 }
 
 function toForm(s: CompanySettings): SettingsForm {
@@ -32,6 +33,7 @@ function toForm(s: CompanySettings): SettingsForm {
     officeEndTime: s.office_end_time.slice(0, 5),
     gracePeriodMinutes: s.grace_period_minutes,
     attendanceLockTime: s.attendance_lock_time.slice(0, 5),
+    logoUrl: s.logo_url || null,
   }
 }
 
@@ -50,6 +52,8 @@ export default function AdminSettingsPage() {
   const [saved, setSaved] = useState<SettingsForm | null>(null)
   const { data, isLoading: loading, mutate } = useSWR('companySettings', getSettings)
   const [saving, setSaving] = useState(false)
+  const [logoFile, setLogoFile] = useState<File | null>(null)
+  const [logoPreview, setLogoPreview] = useState<string | null>(null)
 
   // Initialize form state when data loads
   useEffect(() => {
@@ -60,7 +64,7 @@ export default function AdminSettingsPage() {
     }
   }, [data, form, saved])
 
-  const isDirty = form && saved && JSON.stringify(form) !== JSON.stringify(saved)
+  const isDirty = !!logoFile || (form && saved && JSON.stringify(form) !== JSON.stringify(saved))
 
   const set = <K extends keyof SettingsForm>(key: K, value: SettingsForm[K]) => {
     setForm((f) => f ? { ...f, [key]: value } : f)
@@ -69,6 +73,24 @@ export default function AdminSettingsPage() {
   const handleSave = useCallback(async () => {
     if (!form) return
     setSaving(true)
+    let newLogoUrl = form.logoUrl
+
+    if (logoFile) {
+      const formData = new FormData()
+      formData.append('file', logoFile)
+      const res = await fetch('/api/settings/logo', {
+        method: 'POST',
+        body: formData,
+      })
+      const json = await res.json()
+      if (json.error) {
+        setSaving(false)
+        showToast(json.error, 'error')
+        return
+      }
+      newLogoUrl = json.data.publicUrl
+    }
+
     const res = await updateSettings({
       company_name: form.companyName,
       office_address: form.officeAddress,
@@ -79,19 +101,28 @@ export default function AdminSettingsPage() {
       office_end_time: form.officeEndTime,
       grace_period_minutes: form.gracePeriodMinutes,
       attendance_lock_time: form.attendanceLockTime,
+      logo_url: newLogoUrl,
     })
     setSaving(false)
     if (res.error) {
       showToast(res.error, 'error')
       return
     }
-    setSaved(form)
-    if (data) mutate({ ...data, ...form, office_lat: Number(form.officeLat), office_lng: Number(form.officeLng) }, false)
+    
+    setLogoFile(null)
+    setLogoPreview(null)
+    const updatedForm = { ...form, logoUrl: newLogoUrl }
+    setSaved(updatedForm)
+    setForm(updatedForm)
+
+    if (data) mutate({ ...data, ...updatedForm, logo_url: newLogoUrl, office_lat: Number(updatedForm.officeLat), office_lng: Number(updatedForm.officeLng) }, false)
     showToast('Settings saved successfully.', 'success')
-  }, [form, showToast, data, mutate])
+  }, [form, logoFile, showToast, data, mutate])
 
   const handleDiscard = () => {
     if (saved) setForm(saved)
+    setLogoFile(null)
+    setLogoPreview(null)
   }
 
   function Spinner() {
@@ -135,14 +166,37 @@ export default function AdminSettingsPage() {
               className={cn(INPUT_CLASS, 'resize-none')}
             />
           </FormField>
-          {/* Logo upload placeholder */}
+          {/* Logo upload */}
           <div>
             <label className="block text-[12px] font-medium text-[#374151] mb-1.5">
               Company logo
             </label>
-            <div className="w-full h-24 border-2 border-dashed border-[#E5E7EB] rounded-xl flex flex-col items-center justify-center gap-1.5 cursor-pointer hover:border-[#4F46E5] hover:bg-[#FAFAFE] transition-colors duration-150">
-              <p className="text-[13px] text-[#9CA3AF]">Click to upload logo</p>
-              <p className="text-[11px] text-[#C4C9D4]">PNG, JPG up to 2MB</p>
+            <div className="relative w-full h-24 border-2 border-dashed border-[#E5E7EB] rounded-xl flex flex-col items-center justify-center overflow-hidden hover:border-[#4F46E5] hover:bg-[#FAFAFE] transition-colors duration-150">
+              <input
+                type="file"
+                accept="image/png, image/jpeg, image/webp"
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+                onChange={(e) => {
+                  const file = e.target.files?.[0]
+                  if (file) {
+                    setLogoFile(file)
+                    setLogoPreview(URL.createObjectURL(file))
+                  }
+                }}
+              />
+              {logoPreview || form.logoUrl ? (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src={logoPreview || form.logoUrl!}
+                  alt="Company Logo"
+                  className="w-full h-full object-contain p-2"
+                />
+              ) : (
+                <div className="flex flex-col items-center justify-center gap-1.5 pointer-events-none">
+                  <p className="text-[13px] text-[#9CA3AF]">Click to upload logo</p>
+                  <p className="text-[11px] text-[#C4C9D4]">PNG, JPG up to 2MB</p>
+                </div>
+              )}
             </div>
           </div>
         </SectionCard>

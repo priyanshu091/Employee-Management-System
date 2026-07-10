@@ -16,6 +16,7 @@ import {
 import { cn } from '@/lib/utils/cn'
 import Avatar from '@/components/shared/Avatar'
 import { useSession } from '@/lib/hooks/useSession'
+import { useCompanySettings } from '@/lib/hooks/useCompanySettings'
 
 interface NavItem {
   label: string
@@ -46,6 +47,7 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
   const pathname = usePathname()
   const { profile, loading } = useSession()
   const displayName = loading ? '...' : (profile?.full_name ?? 'Admin')
+  const { settings } = useCompanySettings()
 
   const isActive = (href: string) => pathname === href || pathname.startsWith(href + '/')
 
@@ -90,9 +92,16 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
         )}
       >
         {/* Logo */}
-        <div className="p-4 border-b border-[#E5E7EB]">
-          <p className="text-[15px] font-semibold text-[#111827]">AttendEase</p>
-          <p className="text-[11px] text-[#6B7280] mt-0.5">Admin Panel</p>
+        <div className="p-4 border-b border-[#E5E7EB] flex items-center h-[73px]">
+          {settings?.logo_url ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img src={settings.logo_url} alt={settings.company_name} className="max-h-full max-w-full object-contain" />
+          ) : (
+            <div>
+              <p className="text-[15px] font-semibold text-[#111827] truncate">{settings?.company_name || 'AttendEase'}</p>
+              <p className="text-[11px] text-[#6B7280] mt-0.5 truncate">Admin Panel</p>
+            </div>
+          )}
         </div>
 
         {/* Nav */}

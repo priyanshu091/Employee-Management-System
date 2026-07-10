@@ -200,7 +200,7 @@
 ### Known placeholders (expected — later phases fill these in)
 - Employees, Attendance, Requests, Holidays, Reports, Audit log, Settings admin pages are static placeholders — built in Phases 6–8.
 - All dashboard data (stats, pending requests, office presence) is mocked and held in local state — replaced with real Supabase queries in Phase 9.
-- Admin user (`Arjun Dubey`) is hardcoded — replaced with real session data in Phase 9.
+- Admin user (`Ajay Singh`) is hardcoded — replaced with real session data in Phase 9.
 
 ---
 
@@ -347,7 +347,7 @@ The user pasted a Supabase DB password, a "publishable key," and (in a follow-up
   - Nonexistent email → `{"error":"No account found with this email address."}` ✅
   - Malformed email → `{"error":"Invalid email address."}` ✅
   - Temporarily flipped the seeded admin's `status` to `inactive` via the service-role key, confirmed `send-otp` correctly blocked it (`"Your account has been deactivated. Contact your admin."`), then reverted to `active` and re-confirmed via REST ✅
-  - Loaded `/admin/dashboard` in headless Chromium with the real session cookie: sidebar correctly renders "Arjun Dubey" (from `useSession`, not the old hardcoded mock), zero page errors ✅
+  - Loaded `/admin/dashboard` in headless Chromium with the real session cookie: sidebar correctly renders "Ajay Singh" (from `useSession`, not the old hardcoded mock), zero page errors ✅
 - Screenshot confirms the dashboard renders normally end-to-end with a real authenticated session.
 
 ### Known gaps / still open (flagging honestly, not glossing over)

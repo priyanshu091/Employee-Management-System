@@ -19,6 +19,7 @@ import Avatar from '@/components/shared/Avatar'
 import { useSession } from '@/lib/hooks/useSession'
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings'
 import { useUnread } from '@/components/employee/UnreadProvider'
+import InstallPWA from '@/components/shared/InstallPWA'
 
 interface NavItem {
   label: string
@@ -121,6 +122,9 @@ export default function EmployeeSidebar({ isOpen, onClose }: EmployeeSidebarProp
             )
           })}
         </nav>
+
+        {/* Install PWA Prompt */}
+        <InstallPWA />
 
         {/* Avatar row — bottom of sidebar */}
         <div className="p-3 border-t border-[#E5E7EB]">

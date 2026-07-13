@@ -20,6 +20,7 @@ import { cn } from '@/lib/utils/cn'
 import Avatar from '@/components/shared/Avatar'
 import { useSession } from '@/lib/hooks/useSession'
 import { useCompanySettings } from '@/lib/hooks/useCompanySettings'
+import InstallPWA from '@/components/shared/InstallPWA'
 
 interface NavItem {
   label: string
@@ -129,6 +130,9 @@ export default function AdminSidebar({ isOpen, onClose }: AdminSidebarProps) {
 
           {NAV_MANAGE.map((item) => <NavLink key={item.href} item={item} />)}
         </nav>
+
+        {/* Install PWA Prompt */}
+        <InstallPWA />
 
         {/* Avatar row — bottom of sidebar */}
         <div className="p-3 border-t border-[#E5E7EB]">

@@ -1,47 +1,47 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect } from 'react'
 import QRCode from 'qrcode'
-import { Download, RefreshCw, QrCode } from 'lucide-react'
+import { Download, QrCode } from 'lucide-react'
 import PageHeader from '@/components/shared/PageHeader'
 
 export default function AdminQRPage() {
-  const canvasRef = useRef<HTMLCanvasElement>(null)
-  const [qrUrl, setQrUrl] = useState('')
+  const [qrDataUrl, setQrDataUrl] = useState('')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState('')
 
   useEffect(() => {
-    if (!canvasRef.current) return
     const origin = window.location.origin
     const token = process.env.NEXT_PUBLIC_QR_CHECKIN_TOKEN ?? ''
+    
     if (!token) {
       setError('QR token not configured. Add NEXT_PUBLIC_QR_CHECKIN_TOKEN to environment variables.')
       setLoading(false)
       return
     }
+    
     const url = `${origin}/qr-checkin?token=${token}`
-    setQrUrl(url)
-    QRCode.toCanvas(
-      canvasRef.current,
+    
+    QRCode.toDataURL(
       url,
       {
         width: 280,
         margin: 2,
         color: { dark: '#111827', light: '#FFFFFF' },
       },
-      (err) => {
+      (err, dataUrl) => {
         if (err) setError('Failed to generate QR code.')
+        else setQrDataUrl(dataUrl)
         setLoading(false)
       }
     )
   }, [])
 
   function handleDownload() {
-    if (!canvasRef.current) return
+    if (!qrDataUrl) return
     const link = document.createElement('a')
     link.download = 'office-qr-checkin.png'
-    link.href = canvasRef.current.toDataURL('image/png')
+    link.href = qrDataUrl
     link.click()
   }
 
@@ -65,7 +65,7 @@ export default function AdminQRPage() {
               <p className="text-[#DC2626] text-[13px]">{error}</p>
             ) : (
               <>
-                <canvas ref={canvasRef} className="rounded-lg" />
+                <img src={qrDataUrl} alt="Office QR Code" className="rounded-lg" />
                 <button
                   onClick={handleDownload}
                   className="mt-4 w-full flex items-center justify-center gap-2 bg-[#4F46E5] hover:bg-[#4338CA] text-white rounded-lg py-2 text-[13px] font-medium transition-colors duration-150"

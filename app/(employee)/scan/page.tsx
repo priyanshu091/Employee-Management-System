@@ -3,6 +3,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Html5Qrcode, Html5QrcodeResult } from 'html5-qrcode'
 import { QrCode, AlertCircle } from 'lucide-react'
+import EmployeeTopbar from '@/components/employee/EmployeeTopbar'
 
 export default function ScanPage() {
   const router = useRouter()
@@ -72,10 +73,7 @@ export default function ScanPage() {
 
   return (
     <div className="min-h-screen bg-[#F3F4F6]">
-      <div className="bg-white border-b border-[#E5E7EB] px-4 py-3 flex items-center gap-3">
-        <QrCode size={20} color="#4F46E5" />
-        <h1 className="text-[15px] font-semibold text-[#111827]">Scan Office QR</h1>
-      </div>
+      <EmployeeTopbar title="Scan Office QR" />
 
       <div className="px-4 pt-6 max-w-sm mx-auto">
         {scanning && (

@@ -32,38 +32,31 @@ export default function InstallPWA() {
 
   if (isStandalone) return null // Hide if already installed
 
-  // For Android / Chrome / Edge where beforeinstallprompt is supported
-  if (deferredPrompt) {
-    return (
-      <div className="px-3 pb-3">
-        <button
-          onClick={() => {
-            deferredPrompt.prompt()
-            deferredPrompt.userChoice.then((choiceResult: any) => {
-              if (choiceResult.outcome === 'accepted') {
-                setDeferredPrompt(null)
-              }
-            })
-          }}
-          className="w-full flex items-center justify-center gap-2 bg-[#EEF2FF] text-[#4F46E5] hover:bg-[#E0E7FF] py-2 rounded-lg text-[12px] font-medium transition-colors duration-150 border border-[#C7D2FE]"
-        >
-          <Download size={14} />
-          Install App
-        </button>
-      </div>
-    )
+  const handleInstallClick = () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt()
+      deferredPrompt.userChoice.then((choiceResult: any) => {
+        if (choiceResult.outcome === 'accepted') {
+          setDeferredPrompt(null)
+        }
+      })
+    } else {
+      // If we don't have the native prompt, show a manual hint
+      alert(isIOS 
+        ? "To install this app on your iPhone: tap the Share icon at the bottom of Safari, then select 'Add to Home Screen'."
+        : "To install this app, open your browser menu (⋮) and select 'Install App' or 'Add to Home screen'.")
+    }
   }
 
-  // For iOS Safari (does not support beforeinstallprompt)
-  if (isIOS && !isStandalone) {
-    return (
-      <div className="px-3 pb-3">
-        <div className="bg-[#EEF2FF] p-2.5 text-center text-[11px] text-[#4F46E5] rounded-lg border border-[#C7D2FE]">
-          To install this app on your iPhone: tap <span className="font-bold">Share</span> below and select <span className="font-bold">Add to Home Screen</span>
-        </div>
-      </div>
-    )
-  }
-
-  return null
+  return (
+    <div className="px-3 pb-3">
+      <button
+        onClick={handleInstallClick}
+        className="w-full flex items-center justify-center gap-2 bg-[#EEF2FF] text-[#4F46E5] hover:bg-[#E0E7FF] py-2 rounded-lg text-[12px] font-medium transition-colors duration-150 border border-[#C7D2FE]"
+      >
+        <Download size={14} />
+        Install App
+      </button>
+    </div>
+  )
 }

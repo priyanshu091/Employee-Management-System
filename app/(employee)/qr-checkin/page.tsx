@@ -341,10 +341,15 @@ function QRCheckinInner() {
   return null
 }
 
+import EmployeeTopbar from '@/components/employee/EmployeeTopbar'
+
 export default function QRCheckinPage() {
   return (
-    <Suspense fallback={<LoadingState message="Loading..." />}>
-      <QRCheckinInner />
-    </Suspense>
+    <div className="min-h-screen bg-[#F3F4F6]">
+      <EmployeeTopbar title="QR Check-in" />
+      <Suspense fallback={<LoadingState message="Loading..." />}>
+        <QRCheckinInner />
+      </Suspense>
+    </div>
   )
 }

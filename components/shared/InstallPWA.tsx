@@ -33,11 +33,15 @@ export default function InstallPWA() {
   if (isStandalone) return null // Hide if already installed
 
   const handleInstallClick = () => {
-    if (deferredPrompt) {
-      deferredPrompt.prompt()
-      deferredPrompt.userChoice.then((choiceResult: any) => {
+    // Check local state or global window state
+    const promptEvent = deferredPrompt || (window as any).deferredPWAInstallPrompt
+
+    if (promptEvent) {
+      promptEvent.prompt()
+      promptEvent.userChoice.then((choiceResult: any) => {
         if (choiceResult.outcome === 'accepted') {
           setDeferredPrompt(null)
+          ;(window as any).deferredPWAInstallPrompt = null
         }
       })
     } else {

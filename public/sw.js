@@ -20,6 +20,13 @@ self.addEventListener('fetch', (event) => {
   if (event.request.url.includes('/api/')) return
 
   event.respondWith(
-    fetch(event.request).catch(() => caches.match(event.request))
+    fetch(event.request).catch(() => {
+      return caches.match(event.request).then((res) => {
+        return res || new Response(
+          '<html><body><h2>You are offline</h2><p>Please check your internet connection.</p></body></html>',
+          { headers: { 'Content-Type': 'text/html' } }
+        )
+      })
+    })
   )
 })

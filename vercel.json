@@ -1,0 +1,12 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/checkout-reminder",
+      "schedule": "*/30 * * * *"
+    },
+    {
+      "path": "/api/cron/mark-absent",
+      "schedule": "*/30 * * * *"
+    }
+  ]
+}

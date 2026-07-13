@@ -14,6 +14,7 @@ import {
   Settings,
   LucideIcon,
   LogOut,
+  QrCode,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import Avatar from '@/components/shared/Avatar'
@@ -35,6 +36,7 @@ const NAV_MAIN: NavItem[] = [
 
 const NAV_MANAGE: NavItem[] = [
   { label: 'Holidays',  href: '/admin/holidays', icon: CalendarPlus },
+  { label: 'Office QR', href: '/admin/qr',       icon: QrCode       },
   { label: 'Reports',   href: '/admin/reports',  icon: BarChart2    },
   { label: 'Audit log', href: '/admin/audit',    icon: History      },
   { label: 'Settings',  href: '/admin/settings', icon: Settings     },

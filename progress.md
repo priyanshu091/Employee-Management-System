@@ -477,3 +477,40 @@ The user pasted a Supabase DB password, a "publishable key," and (in a follow-up
 - [ ] Resend → Domains → verify your domain → update `from` address in `lib/email/send-otp.ts` and `lib/email/send-notification.ts` from `onboarding@resend.dev` to `noreply@yourdomain.com`
 - [ ] Admin → Settings page → set real office latitude + longitude
 - [ ] Investigate and remove orphan profile `EMP-003 / Test E2E User` from Supabase if it was a test artifact
+
+---
+
+## PWA Setup — ✅ DONE
+
+- Created `public/manifest.json`.
+- Generated and saved PWA icons in `public/icons`.
+- Added Service Worker (`public/sw.js`) with offline caching functionality for non-API requests.
+- Updated PWA meta tags in `<head>` and inline Service Worker registration script in `app/layout.tsx`.
+
+---
+
+## Phase 10A — QR Validation — ✅ DONE
+
+- [x] app/api/qr/validate/route.ts — server-side QR token validation
+- [x] QR_CHECKIN_SECRET added to .env.local and CLAUDE.md
+- [x] app/(employee)/qr-checkin/page.tsx — mobile check-in/out UI (6 states)
+- [x] npm run build — zero errors
+
+---
+
+## Phase 10B — Part 1: Admin QR Page — ✅ DONE
+
+- [x] qrcode + @types/qrcode installed
+- [x] app/(admin)/admin/qr/page.tsx — QR display + download
+- [x] NEXT_PUBLIC_QR_CHECKIN_TOKEN added to .env.local and CLAUDE.md
+- [x] AdminSidebar.tsx — Office QR nav link added
+- [x] npm run build — zero errors
+
+---
+
+## Phase 10B — Part 2: QR Scanner + Sidebar Links — ✅ DONE
+
+- [x] html5-qrcode installed
+- [x] app/(employee)/scan/page.tsx — in-app QR scanner with camera
+- [x] EmployeeSidebar.tsx — Scan QR nav link added (after Dashboard)
+- [x] npm run build — zero errors

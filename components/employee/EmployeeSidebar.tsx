@@ -12,6 +12,7 @@ import {
   Bell,
   LucideIcon,
   LogOut,
+  QrCode,
 } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import Avatar from '@/components/shared/Avatar'
@@ -28,6 +29,7 @@ interface NavItem {
 // FIX 5: Removed hardcoded badge values from NAV_ITEMS
 const NAV_ITEMS: NavItem[] = [
   { label: 'Dashboard',      href: '/dashboard',     icon: LayoutDashboard },
+  { label: 'Scan QR',        href: '/scan',          icon: QrCode },
   { label: 'Attendance',     href: '/attendance',    icon: Calendar },
   { label: 'Leave',          href: '/leave',         icon: Umbrella },
   { label: 'Work from home', href: '/wfh',           icon: Home },

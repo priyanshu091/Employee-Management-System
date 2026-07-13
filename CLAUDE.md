@@ -53,6 +53,8 @@ NEXT_PUBLIC_SUPABASE_ANON_KEY=
 SUPABASE_SERVICE_ROLE_KEY=
 RESEND_API_KEY=
 NEXT_PUBLIC_APP_URL=
+QR_CHECKIN_SECRET=   # Server-only. QR check-in token — validated server-side in /api/qr/validate. Never expose to client.
+NEXT_PUBLIC_QR_CHECKIN_TOKEN=  # Public version of QR_CHECKIN_SECRET — used only to build the QR URL in the browser. Must match QR_CHECKIN_SECRET value exactly.
 ```
 
 Never expose `SUPABASE_SERVICE_ROLE_KEY` or `RESEND_API_KEY` to the client.

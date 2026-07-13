@@ -25,6 +25,9 @@ export default function VerifyPage() {
   const [errorMsg, setErrorMsg] = useState('')
   const [success, setSuccess] = useState(false)
 
+  const [step, setStep] = useState<'otp' | 'remember-me'>('otp')
+  const [redirectTo, setRedirectTo] = useState('/dashboard')
+
   useEffect(() => {
     const stored = sessionStorage.getItem('otp_email')
     if (!stored) {
@@ -60,12 +63,10 @@ export default function VerifyPage() {
     setHasError(false)
     setErrorMsg('')
 
-    const rememberMe = sessionStorage.getItem('rememberMe') !== 'false'
-
     const res = await fetch('/api/auth/verify-otp', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, otp: code, rememberMe }),
+      body: JSON.stringify({ email, otp: code }),
     })
 
     const json = await res.json()
@@ -78,13 +79,28 @@ export default function VerifyPage() {
       return
     }
 
-    // Success
-    setSuccess(true)
+    // Success - move to remember-me step
+    setRedirectTo(json.data.redirectTo)
+    setLoading(false)
+    setStep('remember-me')
     sessionStorage.removeItem('otp_email')
-    sessionStorage.removeItem('rememberMe')
+  }
 
-    await new Promise((res) => setTimeout(res, 800))
-    router.push(json.data.redirectTo)
+  const handleRememberMeChoice = async (remember: boolean) => {
+    setLoading(true)
+    try {
+      await fetch('/api/auth/extend-session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rememberMe: remember }),
+      })
+    } catch (err) {
+      console.error('Failed to extend session:', err)
+    }
+
+    setSuccess(true)
+    await new Promise((res) => setTimeout(res, 600))
+    router.push(redirectTo)
   }
 
   const handleResend = useCallback(async () => {
@@ -105,10 +121,52 @@ export default function VerifyPage() {
           <div className="flex justify-center mb-4">
             <CheckCircle className="text-[#16A34A]" size={40} strokeWidth={1.5} />
           </div>
-          <h2 className="text-[16px] font-semibold text-[#111827]">Verified!</h2>
-          <p className="text-[13px] text-[#6B7280] mt-1">Redirecting you to your dashboard...</p>
+          <h2 className="text-[16px] font-semibold text-[#111827]">Signed In!</h2>
+          <p className="text-[13px] text-[#6B7280] mt-1">Redirecting to your dashboard...</p>
           <div className="mt-4 flex justify-center">
             <div className="w-4 h-4 border-2 border-[#4F46E5] border-t-transparent rounded-full animate-spin" />
+          </div>
+        </div>
+      </main>
+    )
+  }
+
+  if (step === 'remember-me') {
+    return (
+      <main className="min-h-screen flex items-center justify-center px-4 bg-[#F3F4F6]">
+        <div className="w-full max-w-sm">
+          <div className="bg-white border border-[#E5E7EB] rounded-[12px] p-8">
+            <div className="mb-6 text-center">
+              <h1 className="text-[18px] font-semibold text-[#111827]">Stay signed in?</h1>
+              <p className="text-[13px] text-[#6B7280] mt-2 leading-relaxed">
+                Do this to reduce the number of times you are asked to sign in on this device.
+              </p>
+            </div>
+
+            <div className="flex flex-col gap-3">
+              <button
+                onClick={() => handleRememberMeChoice(true)}
+                disabled={loading}
+                className="
+                  w-full py-2.5 px-4 rounded-lg text-[13px] font-medium text-white
+                  bg-[#4F46E5] hover:bg-[#4338CA] active:bg-[#3730A3]
+                  transition-colors duration-150 disabled:opacity-50
+                "
+              >
+                Yes
+              </button>
+              <button
+                onClick={() => handleRememberMeChoice(false)}
+                disabled={loading}
+                className="
+                  w-full py-2.5 px-4 rounded-lg text-[13px] font-medium text-[#374151]
+                  bg-white border border-[#D1D5DB] hover:bg-[#F9FAFB] active:bg-[#F3F4F6]
+                  transition-colors duration-150 disabled:opacity-50
+                "
+              >
+                No
+              </button>
+            </div>
           </div>
         </div>
       </main>

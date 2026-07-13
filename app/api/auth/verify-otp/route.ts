@@ -4,7 +4,7 @@ import { createAdminClient } from '@/lib/supabase/admin'
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, otp, rememberMe = true } = await request.json()
+    const { email, otp } = await request.json()
 
     if (!email || !otp || otp.length !== 6) {
       return NextResponse.json(
@@ -100,9 +100,8 @@ export async function POST(request: NextRequest) {
     // attach the real session cookies to it as it verifies the token.
     const response = NextResponse.json({ data: null, error: null })
 
-    const cookieOptions = rememberMe
-      ? { maxAge: 60 * 60 * 24 * 30 } // 30 days
-      : {} // session cookie (no maxAge = expires on browser close)
+    // Always start with session cookies (expires on browser close)
+    const cookieOptions = {}
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -160,22 +159,12 @@ export async function POST(request: NextRequest) {
 
     response.cookies.delete('_otp_pending')
 
-    if (rememberMe) {
-      response.cookies.set('sb-remember-me', 'true', {
-        httpOnly: false,
-        maxAge: 60 * 60 * 24 * 30, // 30 days
-        path: '/',
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-      })
-    } else {
-      response.cookies.set('sb-remember-me', 'false', {
-        httpOnly: false,
-        path: '/',
-        sameSite: 'lax',
-        secure: process.env.NODE_ENV === 'production',
-      })
-    }
+    response.cookies.set('sb-remember-me', 'false', {
+      httpOnly: false,
+      path: '/',
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+    })
 
     // Re-serialize the JSON body now that we know the redirect target
     // (the session cookies set above are preserved on this same response).

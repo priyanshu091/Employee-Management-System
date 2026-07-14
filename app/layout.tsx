@@ -1,10 +1,13 @@
 import type { Metadata } from 'next'
+import { Inter } from 'next/font/google'
+import Script from 'next/script'
 import './globals.css'
 
 import { createClient } from '@/lib/supabase/server'
 
-export const revalidate = 0
-export const dynamic = 'force-dynamic'
+export const revalidate = 3600 // Cache for 1 hour
+
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' })
 
 export async function generateMetadata(): Promise<Metadata> {
   const supabase = await createClient()
@@ -36,9 +39,11 @@ export default function RootLayout({
         <meta name="apple-mobile-web-app-title" content="FeelifyEMS" />
         <link rel="apple-touch-icon" href="/icons/icon-192.png" />
       </head>
-      <body>
+      <body className={`${inter.variable} font-sans`}>
         {children}
-        <script
+        <Script
+          id="pwa-init"
+          strategy="afterInteractive"
           dangerouslySetInnerHTML={{
             __html: `
               window.deferredPWAInstallPrompt = null;

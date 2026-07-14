@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useRouter } from 'next/navigation'
 import { LogIn, LogOut, Clock } from 'lucide-react'
 import { getLiveTimer, formatTime, getTodayIST } from '@/lib/utils/time'
 import { checkOfficeProximity } from '@/lib/utils/geo'
@@ -24,6 +25,7 @@ interface CheckInCardProps {
 }
 
 export default function CheckInCard({ onCheckInSuccess, onCheckOutSuccess }: CheckInCardProps = {}) {
+  const router = useRouter()
   const { showToast } = useToast()
   const [cardState, setCardState] = useState<CardState>('loading')
   const [record, setRecord] = useState<Attendance | null>(null)
@@ -114,7 +116,8 @@ export default function CheckInCard({ onCheckInSuccess, onCheckOutSuccess }: Che
     setCardState('working')
     showToast('Checked in successfully!', 'success')
     onCheckInSuccess?.()
-  }, [showToast, onCheckInSuccess])
+    router.refresh()
+  }, [showToast, onCheckInSuccess, router])
 
   const handleCheckOut = useCallback(async () => {
     const res = await fetch('/api/attendance/checkout', { method: 'POST' })
@@ -129,7 +132,8 @@ export default function CheckInCard({ onCheckInSuccess, onCheckOutSuccess }: Che
     setCardState('done')
     showToast('Checked out successfully!', 'success')
     onCheckOutSuccess?.()
-  }, [showToast, onCheckOutSuccess])
+    router.refresh()
+  }, [showToast, onCheckOutSuccess, router])
 
   if (cardState === 'loading') {
     return (

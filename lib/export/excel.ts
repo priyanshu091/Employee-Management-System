@@ -1,8 +1,8 @@
-import * as XLSX from 'xlsx'
 import type { ReportType } from '@/lib/mock/reports'
 import type { AttendanceWithProfile } from '@/types'
 
-export function exportReportToExcel(type: ReportType | 'attendance', rows: any[], label: string): void {
+export async function exportReportToExcel(type: ReportType | 'attendance', rows: any[], label: string): Promise<void> {
+  const XLSX = await import('xlsx')
   let data: any[] = []
 
   const getP = (p: any) => Array.isArray(p) ? p[0] : p

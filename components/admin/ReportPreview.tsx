@@ -212,12 +212,12 @@ function LateTable({ rows }: { rows: any[] }) {
 export default function ReportPreview({ type, rows, label, generated }: ReportPreviewProps) {
   const { showToast } = useToast()
 
-  const handleExport = (format: 'PDF' | 'Excel') => {
+  const handleExport = async (format: 'PDF' | 'Excel') => {
     try {
       if (format === 'PDF') {
-        exportReportToPDF(type!, rows, label)
+        await exportReportToPDF(type!, rows, label)
       } else {
-        exportReportToExcel(type!, rows, label)
+        await exportReportToExcel(type!, rows, label)
       }
 
       fetch('/api/audit/export', {

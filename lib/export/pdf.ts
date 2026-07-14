@@ -1,9 +1,9 @@
-import jsPDF from 'jspdf'
-import autoTable from 'jspdf-autotable'
 import type { ReportType } from '@/lib/mock/reports'
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-export function exportReportToPDF(type: ReportType, rows: any[], label: string): void {
+export async function exportReportToPDF(type: ReportType, rows: any[], label: string): Promise<void> {
+  const jsPDF = (await import('jspdf')).default
+  const autoTable = (await import('jspdf-autotable')).default
   const doc = new jsPDF()
 
   // Header

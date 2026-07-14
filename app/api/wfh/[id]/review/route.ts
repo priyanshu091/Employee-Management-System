@@ -51,16 +51,26 @@ export async function PATCH(
     if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
 
     if (action === 'approved') {
-      const { error: mutationError } = await adminClient.from('attendance').upsert({
-        employee_id: req.employee_id,
-        date: req.date,
-        type: 'wfh',
-        status: 'wfh',
-      }, { onConflict: 'employee_id,date' })
+      const { data: existingAttendance } = await adminClient
+        .from('attendance')
+        .select('id, check_in')
+        .eq('employee_id', req.employee_id)
+        .eq('date', req.date)
+        .maybeSingle()
 
-      if (mutationError) {
-        console.error('[wfh review] mutation failed:', mutationError)
-        return NextResponse.json({ data: null, error: mutationError.message }, { status: 500 })
+      if (!existingAttendance?.check_in) {
+        const { error: mutationError } = await adminClient.from('attendance').upsert({
+          employee_id: req.employee_id,
+          date: req.date,
+          type: 'wfh',
+          status: 'wfh',
+          working_hours: 0,
+        }, { onConflict: 'employee_id,date' })
+
+        if (mutationError) {
+          console.error('[wfh review] mutation failed:', mutationError)
+          return NextResponse.json({ data: null, error: mutationError.message }, { status: 500 })
+        }
       }
     }
 

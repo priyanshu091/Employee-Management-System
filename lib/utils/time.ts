@@ -3,11 +3,14 @@ export function calcWorkingHours(checkIn: string, checkOut: string): number {
   return Math.round((ms / 1000 / 60 / 60) * 100) / 100
 }
 
+const IST_OFFSET_MS = 5.5 * 60 * 60 * 1000
+
 export function getTodayIST(): string {
-  const now = new Date()
-  const istOffset = 5.5 * 60 * 60 * 1000
-  const istDate = new Date(now.getTime() + istOffset)
-  return istDate.toISOString().split('T')[0]
+  return new Date(Date.now() + IST_OFFSET_MS).toISOString().split('T')[0]
+}
+
+export function getNowIST(): Date {
+  return new Date(Date.now() + IST_OFFSET_MS)
 }
 
 export function getCurrentISTTime(): { hours: number; minutes: number } {
@@ -30,10 +33,19 @@ export function isLate(
   officeStart: string,
   graceMinutes: number
 ): boolean {
-  const [h, m] = officeStart.split(':').map(Number)
-  const cutoff = new Date(checkInTime)
-  cutoff.setHours(h, m + graceMinutes, 0, 0)
-  return checkInTime > cutoff
+  // Convert check-in time to IST by adding offset
+  const checkInIST = new Date(checkInTime.getTime() + IST_OFFSET_MS)
+
+  // Get IST hours and minutes from check-in
+  const checkInHours = checkInIST.getUTCHours()
+  const checkInMinutes = checkInIST.getUTCMinutes()
+  const checkInTotalMinutes = checkInHours * 60 + checkInMinutes
+
+  // Parse office start time (already in IST)
+  const [startH, startM] = officeStart.split(':').map(Number)
+  const cutoffTotalMinutes = startH * 60 + startM + graceMinutes
+
+  return checkInTotalMinutes > cutoffTotalMinutes
 }
 
 export function formatTime(date: Date): string {

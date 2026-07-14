@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback, FormEvent } from 'react'
 import { useRouter } from 'next/navigation'
 import { ArrowLeft, CheckCircle } from 'lucide-react'
 import OTPInput from '@/components/auth/OTPInput'
-import ResendTimer from '@/components/auth/ResendTimer'
 
 function Spinner({ color = 'white' }: { color?: string }) {
   return (
@@ -24,6 +23,9 @@ export default function VerifyPage() {
   const [hasError, setHasError] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [success, setSuccess] = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
+  const [countdown, setCountdown] = useState(60)
+  const [canResend, setCanResend] = useState(false)
 
   const [step, setStep] = useState<'otp' | 'remember-me'>('otp')
   const [redirectTo, setRedirectTo] = useState('/dashboard')
@@ -36,6 +38,15 @@ export default function VerifyPage() {
     }
     setEmail(stored)
   }, [router])
+
+  useEffect(() => {
+    if (countdown <= 0) {
+      setCanResend(true)
+      return
+    }
+    const timer = setTimeout(() => setCountdown((s) => s - 1), 1000)
+    return () => clearTimeout(timer)
+  }, [countdown])
 
   const maskEmail = (e: string) => {
     const [user, domain] = e.split('@')
@@ -63,27 +74,32 @@ export default function VerifyPage() {
     setHasError(false)
     setErrorMsg('')
 
-    const res = await fetch('/api/auth/verify-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, otp: code }),
-    })
+    try {
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, otp: code }),
+      })
 
-    const json = await res.json()
+      const json = await res.json()
 
-    if (!res.ok || json.error) {
+      if (!res.ok || json.error) {
+        setHasError(true)
+        setErrorMsg(json.error ?? 'Incorrect OTP. Please try again.')
+        setOtp(Array(6).fill(''))
+        return
+      }
+
+      // Success - move to remember-me step
+      setRedirectTo(json.data.redirectTo ?? '/dashboard')
+      setStep('remember-me')
+      sessionStorage.removeItem('otp_email')
+    } catch {
       setHasError(true)
-      setErrorMsg(json.error ?? 'Incorrect OTP. Please try again.')
-      setOtp(Array(6).fill(''))
+      setErrorMsg('Network error. Please check your connection and try again.')
+    } finally {
       setLoading(false)
-      return
     }
-
-    // Success - move to remember-me step
-    setRedirectTo(json.data.redirectTo)
-    setLoading(false)
-    setStep('remember-me')
-    sessionStorage.removeItem('otp_email')
   }
 
   const handleRememberMeChoice = async (remember: boolean) => {
@@ -104,14 +120,31 @@ export default function VerifyPage() {
   }
 
   const handleResend = useCallback(async () => {
+    setResendLoading(true)
     setOtp(Array(6).fill(''))
     setHasError(false)
     setErrorMsg('')
-    await fetch('/api/auth/send-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    })
+    try {
+      const res = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+      const json = await res.json()
+      if (!res.ok || json.error) {
+        setHasError(true)
+        setErrorMsg(json.error ?? 'Failed to resend OTP. Please try again.')
+        return // do NOT restart countdown
+      }
+      setCountdown(60)
+      setCanResend(false)
+      setErrorMsg('')
+    } catch {
+      setHasError(true)
+      setErrorMsg('Network error. Could not resend OTP.')
+    } finally {
+      setResendLoading(false)
+    }
   }, [email])
 
   if (success) {
@@ -235,7 +268,23 @@ export default function VerifyPage() {
               {loading ? <Spinner /> : 'Verify OTP'}
             </button>
 
-            <ResendTimer onResend={handleResend} />
+            <p className="text-center text-[13px] text-[#6B7280]">
+              Didn&apos;t receive it?{' '}
+              {canResend ? (
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={resendLoading}
+                  className="text-[#4F46E5] font-medium hover:underline focus:outline-none focus:underline disabled:opacity-50"
+                >
+                  {resendLoading ? 'Sending...' : 'Resend OTP'}
+                </button>
+              ) : (
+                <span className="text-[#9CA3AF]">
+                  Resend in 0:{String(countdown).padStart(2, '0')}
+                </span>
+              )}
+            </p>
           </form>
         </div>
       </div>

@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { mutate } from 'swr'
 import { usePathname, useRouter } from 'next/navigation'
 import {
   LayoutDashboard,
@@ -52,6 +53,12 @@ export default function EmployeeSidebar({ isOpen, onClose }: EmployeeSidebarProp
   const [loggingOut, setLoggingOut] = useState(false)
   const router = useRouter()
 
+  useEffect(() => {
+    const handler = () => { mutate('myNotifications') }
+    window.addEventListener('notifications-updated', handler)
+    return () => window.removeEventListener('notifications-updated', handler)
+  }, [])
+
   async function handleLogout() {
     setLoggingOut(true)
     try {
@@ -97,7 +104,9 @@ export default function EmployeeSidebar({ isOpen, onClose }: EmployeeSidebarProp
         <nav className="flex-1 p-2 overflow-y-auto" aria-label="Employee navigation">
           {NAV_ITEMS.map((item) => {
             const Icon = item.icon
-            const isActive = pathname === item.href
+            const isActive = item.href === '/dashboard'
+              ? pathname === '/dashboard'
+              : pathname === item.href || pathname.startsWith(item.href + '/')
             return (
               <Link
                 key={item.href}

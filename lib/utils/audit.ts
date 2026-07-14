@@ -19,15 +19,22 @@ export async function writeAuditLog({
 }): Promise<void> {
   try {
     const adminClient = createAdminClient()
-    await adminClient.from('audit_logs').insert({
+    const { error } = await adminClient.from('audit_logs').insert({
       target_type: targetType,
       target_id: targetId,
       employee_id: employeeId,
       changed_by: changedBy,
-      previous_value: previousValue,
-      new_value: newValue,
+      previous_value: previousValue ?? {},
+      new_value: newValue ?? {},
       reason,
     })
+
+    if (error) {
+      console.error('[AUDIT LOG FAILURE] Failed to write audit log:', error.message, {
+        target_type: targetType,
+        target_id: targetId,
+      })
+    }
   } catch (err) {
     console.error('[writeAuditLog]', err)
   }

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { LogIn, LogOut, Clock } from 'lucide-react'
-import { getLiveTimer, formatTime } from '@/lib/utils/time'
+import { getLiveTimer, formatTime, getTodayIST } from '@/lib/utils/time'
 import { checkOfficeProximity } from '@/lib/utils/geo'
 import { getTodayAttendance, getCompanySettings } from '@/lib/api/employee'
 import CheckInModal from './CheckInModal'
@@ -55,44 +55,61 @@ export default function CheckInCard({ onCheckInSuccess, onCheckOutSuccess }: Che
   }, [cardState, record])
 
   const handleCheckInSuccess = useCallback(async (type: 'office' | 'wfh') => {
-    // If office, run GPS check first
-    if (type === 'office') {
+    if (type === 'wfh') {
       setVerifying(true)
-      const settings = await getCompanySettings()
+      const res = await fetch('/api/wfh', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ date: getTodayIST(), reason: 'WFH request from check-in' }),
+      })
+      const json = await res.json()
       setVerifying(false)
 
-      if (settings) {
-        const geo = await checkOfficeProximity(
-          Number(settings.office_lat),
-          Number(settings.office_lng),
-          Number(settings.allowed_radius_km)
-        )
-        if (geo.error) {
-          showToast(geo.error, 'error')
-          return
-        }
-        if (!geo.allowed) {
-          showToast(`You are ${geo.distanceKm} km from the office. Move closer to check in.`, 'error')
-          return
-        }
+      if (!res.ok || json.error) {
+        showToast(json.error ?? 'Failed to request WFH.', 'error')
+        return
       }
+
+      showToast('WFH request sent to admin for approval.', 'success')
+      setShowModal(false)
+      return
+    }
+
+    setVerifying(true)
+    let lat: number, lng: number
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          timeout: 10000,
+          enableHighAccuracy: true,
+        })
+      })
+      lat = position.coords.latitude
+      lng = position.coords.longitude
+    } catch (err) {
+      setVerifying(false)
+      showToast('Location access is required for office check-in. Please enable location permissions.', 'error')
+      return
     }
 
     const res = await fetch('/api/attendance/checkin', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ type }),
+      body: JSON.stringify({ type, lat, lng }),
     })
     const json = await res.json()
+    setVerifying(false)
 
     if (!res.ok || json.error) {
       showToast(json.error ?? 'Failed to check in.', 'error')
+      // If error (e.g. 403 too far), we don't close the modal or switch to working state
       return
     }
 
+    setShowModal(false)
     setRecord(json.data)
     setCardState('working')
-    showToast(type === 'wfh' ? 'Checked in as Work from Home.' : 'Checked in successfully!', 'success')
+    showToast('Checked in successfully!', 'success')
     onCheckInSuccess?.()
   }, [showToast, onCheckInSuccess])
 

@@ -38,7 +38,15 @@ export async function POST(request: NextRequest) {
       .insert({ name: name.trim(), date, created_by: user.id })
       .select().single()
 
-    if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
+    if (error) {
+      if (error.code === '23505') {
+        return NextResponse.json(
+          { data: null, error: 'A holiday already exists on this date. Please choose a different date.' },
+          { status: 409 }
+        )
+      }
+      return NextResponse.json({ data: null, error: error.message }, { status: 500 })
+    }
     return NextResponse.json({ data, error: null }, { status: 201 })
   } catch {
     return NextResponse.json({ data: null, error: 'Internal server error' }, { status: 500 })

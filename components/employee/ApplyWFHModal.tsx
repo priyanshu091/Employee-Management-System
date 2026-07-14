@@ -16,17 +16,20 @@ interface FormErrors {
   reason?: string
 }
 
+import { getTodayIST } from '@/lib/utils/time'
+
 interface ApplyWFHModalProps {
   onClose: () => void
   onSubmit: (data: FormState) => void
+  checkedInToday?: boolean
 }
 
 function Spinner() {
   return <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mx-auto" />
 }
 
-export default function ApplyWFHModal({ onClose, onSubmit }: ApplyWFHModalProps) {
-  const today = new Date().toISOString().split('T')[0]
+export default function ApplyWFHModal({ onClose, onSubmit, checkedInToday }: ApplyWFHModalProps) {
+  const today = getTodayIST()
 
   const [form, setForm] = useState<FormState>({ date: '', reason: '' })
   const [errors, setErrors] = useState<FormErrors>({})
@@ -41,6 +44,9 @@ export default function ApplyWFHModal({ onClose, onSubmit }: ApplyWFHModalProps)
     const errs: FormErrors = {}
     if (!form.date)           errs.date   = 'Select a date.'
     if (!form.reason.trim())  errs.reason = 'Enter a reason.'
+    if (form.date === today && checkedInToday) {
+      errs.date = 'You are already checked into the office today. You cannot submit a WFH request for today.'
+    }
     setErrors(errs)
     return Object.keys(errs).length === 0
   }

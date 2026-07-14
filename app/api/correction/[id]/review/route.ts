@@ -53,6 +53,13 @@ export async function PATCH(
     if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
 
     if (action === 'approved') {
+      if (!req.requested_check_in && !req.requested_check_out) {
+        return NextResponse.json(
+          { data: null, error: 'At least one of check-in or check-out time must be provided.' },
+          { status: 400 }
+        )
+      }
+
       const { data: existing } = await adminClient
         .from('attendance')
         .select('*')
@@ -60,9 +67,25 @@ export async function PATCH(
         .eq('date', req.date)
         .maybeSingle()
 
+      if (!existing && !req.requested_check_in && req.requested_check_out) {
+        return NextResponse.json(
+          { data: null, error: 'Cannot apply check-out correction without a check-in time.' },
+          { status: 400 }
+        )
+      }
+
+      function toISTTimestamp(date: string, time: string | null): string | null {
+        if (!time) return null
+        const normalized = time.length === 5 ? `${time}:00` : time
+        return `${date}T${normalized}+05:30`
+      }
+
       const updates: Record<string, unknown> = { updated_at: new Date().toISOString() }
-      if (req.requested_check_in) updates.check_in = `${req.date}T${req.requested_check_in}`
-      if (req.requested_check_out) updates.check_out = `${req.date}T${req.requested_check_out}`
+      const newCheckIn = toISTTimestamp(req.date, req.requested_check_in)
+      const newCheckOut = toISTTimestamp(req.date, req.requested_check_out)
+
+      if (newCheckIn) updates.check_in = newCheckIn
+      if (newCheckOut) updates.check_out = newCheckOut
 
       const effectiveCheckIn = updates.check_in ?? existing?.check_in
       const effectiveCheckOut = updates.check_out ?? existing?.check_out

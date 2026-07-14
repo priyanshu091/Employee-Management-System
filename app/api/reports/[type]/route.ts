@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 
+function getLastDayOfMonth(year: number, month: number): string {
+  const lastDay = new Date(year, month, 0).getDate()
+  return `${year}-${String(month).padStart(2, '0')}-${String(lastDay).padStart(2, '0')}`
+}
+
 function formatTime(iso: string | null): string {
   if (!iso) return '--'
   return new Date(iso).toLocaleTimeString('en-IN', {
@@ -96,7 +101,7 @@ export async function GET(
       const department = url.searchParams.get('department')
 
       const startDate = `${year}-${String(month).padStart(2, '0')}-01`
-      const endDate = `${year}-${String(month).padStart(2, '0')}-31`
+      const endDate = getLastDayOfMonth(year, month)
 
       const { data, error } = await supabase
         .from('attendance')
@@ -290,7 +295,7 @@ export async function GET(
       const department = url.searchParams.get('department')
 
       const startDate = `${year}-${String(month).padStart(2, '0')}-01`
-      const endDate = `${year}-${String(month).padStart(2, '0')}-31`
+      const endDate = getLastDayOfMonth(year, month)
 
       const { data, error } = await supabase
         .from('attendance')

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getTodayIST } from '@/lib/utils/time'
 
 export async function GET(request: NextRequest) {
   try {
@@ -77,6 +78,14 @@ export async function POST(request: NextRequest) {
 
     if (end_date < start_date) {
       return NextResponse.json({ data: null, error: 'End date must be after start date.' }, { status: 400 })
+    }
+
+    const todayIST = getTodayIST()
+    if (start_date < todayIST) {
+      return NextResponse.json(
+        { data: null, error: 'Leave start date cannot be in the past. Use a correction request for past dates.' },
+        { status: 400 }
+      )
     }
 
     const { data: overlapping } = await supabase

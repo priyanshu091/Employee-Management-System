@@ -514,3 +514,69 @@ The user pasted a Supabase DB password, a "publishable key," and (in a follow-up
 - [x] app/(employee)/scan/page.tsx — in-app QR scanner with camera
 - [x] EmployeeSidebar.tsx — Scan QR nav link added (after Dashboard)
 - [x] npm run build — zero errors
+
+---
+
+## Batch 1A Bug Fixes
+
+- [x] `app/api/auth/send-otp/route.ts` — Added `attempts: 0` to OTP payload.
+- [x] `app/api/auth/verify-otp/route.ts` — Added brute-force protection tracking failed attempts, clearing OTP cookie upon 5 failed attempts or expiration, returning 429 or 401 accordingly.
+- [x] `app/api/employees/[id]/route.ts` — Call `adminClient.auth.admin.signOut(id)` to invalidate session when employee status is set to `inactive`.
+
+---
+
+## Batch 1B Bug Fixes
+
+- [x] `app/api/attendance/checkin/route.ts` — Implemented server-side GPS verification by importing `haversineKm`, requiring `lat` and `lng` for office check-ins. Rejected `wfh` check-in type instructing to use `/api/wfh`.
+- [x] `app/api/qr/validate/route.ts` — Rewritten to perform check-in and check-out inline with GPS verification (`haversineKm`) for check-ins.
+- [x] `app/api/leave/[id]/review/route.ts` — Changed leave approval logic to safely batch upsert attendance first, skip dates with real existing attendance, and then update leave status.
+- [x] `components/employee/CheckInCard.tsx` — Replaced client-side GPS check with fetching GPS and forwarding to server-side check-in. Routed 'wfh' option to hit `/api/wfh` and correctly stay in idle state showing 'Request sent' instead of fake check-in.
+- [x] `app/(employee)/qr-checkin/page.tsx` — Updated to prompt for GPS before sending QR validate token and added redirect to login on 401.
+- [x] `lib/utils/time.ts` — Standardized `getTodayIST` and added `getNowIST`.
+
+---
+
+## Batch 2A Bug Fixes
+
+- [x] `lib/utils/time.ts` — Fixed `isLate()` to convert time to IST and perform total minutes comparison instead of buggy UTC `setHours()`.
+- [x] `app/api/attendance/checkin/route.ts` — Fixed `attendance_lock_time` check to use IST-based `now` and compare total minutes properly instead of UTC `setHours()`.
+- [x] `app/api/admin/stats/route.ts` — Used `getTodayIST()` instead of UTC `new Date().toISOString()`. Updated present count filter to correctly include employees with a `late` status.
+- [x] `app/api/correction/[id]/review/route.ts` — Added helper function to force a `+05:30` IST suffix when building timestamp strings. Added fallback validation logic to forbid check-out-only corrections unless a row exists or a check-in is also provided.
+
+---
+
+## Batch 2B Bug Fixes
+
+- [x] `app/api/employees/route.ts` — Fixed employee ID collision bug by querying `MAX(employee_id)` mathematically instead of relying on an unreliable DB `COUNT`.
+- [x] `lib/utils/audit.ts` — Handled Supabase JS silent swallowing of errors by explicitly checking for the `error` object and console error logging on audit log failures. Defaulted previous/new values to `{}` to prevent JSON schema rejection.
+- [x] `app/api/settings/route.ts` — Introduced correct upsert fallbacks for the initial settings POST if a row does not exist, and configured the GET to elegantly serve structured fallback defaults instead of breaking.
+- [x] `app/api/reports/[type]/route.ts` — Eradicated hardcoded `-31` end date values which crashed Postgres for shorter months. Employed a dynamic `getLastDayOfMonth` calculation logic.
+- [x] `app/api/attendance/route.ts` — Upgraded the PATCH route logic to reliably merge incoming admin edits with the existing data state before calculating `working_hours`, stopping data sync drift when only checking out.
+
+---
+
+## Batch 3B Bug Fixes
+
+- [x] `app/(employee)/scan/page.tsx` — Fixed camera stream resource leak by properly `await`ing `scanner.stop()` before router navigation and enforcing a cleanup inside `useEffect` during component unmount.
+- [x] `app/(employee)/notifications/page.tsx` & `components/employee/EmployeeSidebar.tsx` — Emitted a custom `notifications-updated` dispatch event post mark-read that signals the sidebar context hook to globally `mutate('myNotifications')`, triggering a reactive badge reset instantly without page reload.
+- [x] `components/employee/AttendanceCalendar.tsx` — Interfaced directly with `GET /api/holidays` using a `useEffect` on mount. Re-mapped the render engine to prioritize the purple `#7C3AED` holiday dot over standard attendance status indicators on public holiday dates.
+- [x] `components/employee/ApplyWFHModal.tsx` & `app/(employee)/wfh/page.tsx` — Validated WFH submission states against `checkedInToday` by polling `getTodayAttendance`. If a user is physically checked into the office, they are actively prohibited from scheduling WFH on the identical `IST` date. Bound the date picker to natively cap its `min` threshold identically using `getTodayIST()`.
+- [x] `components/employee/ApplyCorrectionModal.tsx` — Form validation dynamically cross-checks the string literal value of `checkIn` versus `checkOut`, forcefully blocking submissions where checking out mathematically precedes checking in (e.g. 5:00 PM < 9:00 AM).
+- [x] `components/employee/EmployeeSidebar.tsx` — Transformed route active detection logic away from absolute matching (`=== item.href`) in favor of relative subtree matching (`startsWith()`), insulating UI consistency from future nested module path expansions (e.g. `/leave/new`).
+
+---
+
+## Batch 3A Bug Fixes
+
+- [x] `app/api/wfh/[id]/review/route.ts` — Upgraded the WFH approval handler to poll the `attendance` table before issuing an upsert. If an active check-in physically exists for that date, the script skips the upsert entirely while retaining the approval status, ensuring valid GPS attendance isn't silently overwritten by a remote zero-hours ledger.
+- [x] `app/api/leave/route.ts` — Inserted strict `start_date` validation intercepting requests targeting dates preceding `getTodayIST()`. Halts historical backdating natively at the POST level, instructing users to submit a `Correction Request` instead.
+- [x] `app/api/settings/route.ts` — Bolstered coordinate validation within the settings `PATCH` route. Blocks invalid bounding box entries (`-90,90` & `-180,180`) and categorically rejects Null Island `0, 0` fallbacks, protecting the GPS bounds engine from collapsing across the workforce.
+- [x] `app/api/holidays/route.ts` — Wrapped the Supabase `insert` pipeline with a Postgres error interceptor (`23505`). Replaces the intimidating raw DB schema violation string with a highly context-aware 409 conflict message about date duplication.
+- [x] `app/auth/login/page.tsx` & `app/auth/verify/page.tsx` — Enclosed the raw fetch networks within robust `try/catch` logic blocks terminating at unified `finally` statements. Cures the UI infinite loading spinner lock when network cables drop mid-flight. Also replaced the `ResendTimer` state management with fully native inline hooks, stopping silent resend counts from resetting if Resend/Supabase drops the payload midway.
+- [x] `proxy.ts` — Augmented the Next.js `middleware` equivalent with a hard loop of `EMPLOYEE_ONLY_PATHS`. Any admin accounts attempting to access routes like `/leave` or `/wfh` are instantly hard-redirected to `/admin/dashboard`, plugging all missing role checks.
+
+---
+
+## Real-Time Notifications Implementation
+
+- [x] `components/employee/UnreadProvider.tsx` — Transformed the static SWR unread provider into a fully reactive Supabase Realtime channel client. Orchestrated a two-stage `useEffect` hook payload: first querying the authentication module for the active UUID, then opening a dynamic WebSocket pipeline (`notifications-${userId}`). Programmed the listener to intercept both Postgres `INSERT` and `UPDATE` schemas bound specifically to that user. When triggered (e.g. admin approves request or user marks-as-read on mobile), the hook instantly instructs SWR to `mutate()` natively, forcing a silent re-fetch across the entire DOM tree and achieving sub-second badge synchronization across all active desktop/mobile tabs.

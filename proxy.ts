@@ -65,14 +65,25 @@ export async function proxy(request: NextRequest) {
 
   const role = profile?.role ?? 'employee'
 
+  const EMPLOYEE_ONLY_PATHS = [
+    '/dashboard',
+    '/attendance',
+    '/leave',
+    '/wfh',
+    '/correction',
+    '/notifications',
+    '/profile',
+    '/scan',
+    '/qr-checkin',
+  ]
+
+  if (EMPLOYEE_ONLY_PATHS.some((p) => pathname.startsWith(p)) && role === 'admin') {
+    return NextResponse.redirect(new URL('/admin/dashboard', request.url))
+  }
+
   // Employee trying to access admin routes
   if (pathname.startsWith('/admin') && role !== 'admin') {
     return NextResponse.redirect(new URL('/dashboard', request.url))
-  }
-
-  // Admin accessing employee dashboard root — redirect to admin dashboard
-  if (pathname === '/dashboard' && role === 'admin') {
-    return NextResponse.redirect(new URL('/admin/dashboard', request.url))
   }
 
   return response

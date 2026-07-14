@@ -45,11 +45,28 @@ function QRCheckinInner() {
       }
 
       try {
+        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+          navigator.geolocation.getCurrentPosition(resolve, reject, {
+            timeout: 10000,
+            enableHighAccuracy: true,
+          })
+        })
+
         const validateRes = await fetch('/api/qr/validate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token }),
+          body: JSON.stringify({
+            token,
+            lat: position.coords.latitude,
+            lng: position.coords.longitude
+          }),
         })
+        
+        if (validateRes.status === 401) {
+          router.push(`/auth/login?redirect=${encodeURIComponent(`/qr-checkin?token=${token}`)}`)
+          return
+        }
+        
         const validateData = await validateRes.json()
 
         if (validateData.error) {
@@ -58,29 +75,27 @@ function QRCheckinInner() {
           return
         }
 
-        const today = new Date().toISOString().split('T')[0]
-        const attendanceRes = await fetch(`/api/attendance?date=${today}`)
-        const attendanceData = await attendanceRes.json()
-
-        const records: Attendance[] = attendanceData.data || []
-        const record = records.find(r => r.date === today)
-
-        if (record) {
-          if (record.check_in && record.check_out) {
-            setPageState('done')
-            setTodayRecord(record)
-          } else if (record.check_in && !record.check_out) {
-            setPageState('checkout')
-            setTodayRecord(record)
-          } else {
-            setPageState('checkin')
-          }
+        const action = validateData.data?.action
+        
+        if (action === 'checkin') {
+          setSuccessType('checkin')
+          setPageState('success')
+          setTimeout(() => router.push('/dashboard'), 3000)
+        } else if (action === 'checkout') {
+          setSuccessType('checkout')
+          setPageState('success')
+          setTimeout(() => router.push('/dashboard'), 3000)
         } else {
-          setPageState('checkin')
+           setPageState('error')
+           setErrorMsg('Unexpected response from server.')
         }
       } catch (err) {
         setPageState('error')
-        setErrorMsg('Network error. Please try again.')
+        if (err instanceof GeolocationPositionError) {
+          setErrorMsg('Location access required for QR check-in.')
+        } else {
+          setErrorMsg('Network error. Please try again.')
+        }
       }
     }
 

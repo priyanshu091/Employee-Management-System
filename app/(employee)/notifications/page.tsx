@@ -24,6 +24,7 @@ export default function NotificationsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ id }),
     })
+    window.dispatchEvent(new CustomEvent('notifications-updated'))
   }
 
   const markAllRead = async () => {
@@ -33,6 +34,7 @@ export default function NotificationsPage() {
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ all: true }),
     })
+    window.dispatchEvent(new CustomEvent('notifications-updated'))
   }
 
   return (

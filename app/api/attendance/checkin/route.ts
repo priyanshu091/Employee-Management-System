@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
-import { isLate, getTodayIST } from '@/lib/utils/time'
+import { isLate, getTodayIST, getNowIST } from '@/lib/utils/time'
+import { haversineKm } from '@/lib/utils/geo'
 
 export async function POST(request: NextRequest) {
   try {
@@ -21,10 +22,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ data: null, error: 'Profile not found' }, { status: 404 })
     }
 
-    const { type, late_reason } = await request.json()
+    const { type, late_reason, lat, lng } = await request.json()
 
     if (!type || !['office', 'wfh'].includes(type)) {
       return NextResponse.json({ data: null, error: 'Invalid type.' }, { status: 400 })
+    }
+
+    if (type === 'wfh') {
+      return NextResponse.json({ data: null, error: 'WFH must be requested via /api/wfh' }, { status: 400 })
+    }
+
+    if (type === 'office' && (lat === undefined || lng === undefined)) {
+      return NextResponse.json({ data: null, error: 'Location is required for office check-in' }, { status: 400 })
     }
 
     const today = getTodayIST()
@@ -49,24 +58,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Get company settings for late check
+    // Get company settings for late check and GPS validation
     const { data: settings, error: settingsError } = await supabase
       .from('company_settings')
-      .select('office_start_time, grace_period_minutes, attendance_lock_time')
+      .select('office_lat, office_lng, allowed_radius_km, office_start_time, grace_period_minutes, attendance_lock_time')
       .maybeSingle()
 
     if (settingsError) {
       console.error('[POST /api/attendance/checkin] Settings error:', settingsError)
     }
 
-    const now = new Date()
+    if (type === 'office' && settings) {
+      const distance = haversineKm(lat, lng, Number(settings.office_lat), Number(settings.office_lng))
+      if (distance > Number(settings.allowed_radius_km)) {
+        return NextResponse.json(
+          { data: null, error: 'You are too far from the office to check in.' },
+          { status: 403 }
+        )
+      }
+    }
+
+    const now = getNowIST()
 
     // Check attendance lock
     if (settings?.attendance_lock_time) {
+      const nowTotalMinutes = now.getUTCHours() * 60 + now.getUTCMinutes()
       const [lh, lm] = settings.attendance_lock_time.split(':').map(Number)
-      const lockTime = new Date(now)
-      lockTime.setHours(lh, lm, 0, 0)
-      if (now > lockTime) {
+      const lockTotalMinutes = lh * 60 + lm
+      
+      if (nowTotalMinutes > lockTotalMinutes) {
         return NextResponse.json(
           { data: null, error: 'Attendance is locked for today. Submit a correction request.' },
           { status: 403 }

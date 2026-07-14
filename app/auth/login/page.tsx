@@ -39,22 +39,29 @@ function LoginForm() {
 
     setLoading(true)
 
-    const res = await fetch('/api/auth/send-otp', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email }),
-    })
+    setLoading(true)
 
-    const json = await res.json()
+    try {
+      const res = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
 
-    if (!res.ok || json.error) {
+      const json = await res.json()
+
+      if (!res.ok || json.error) {
+        setError(json.error ?? 'Failed to send OTP. Please try again.')
+        return
+      }
+
+      sessionStorage.setItem('otp_email', email)
+      router.push(`/auth/verify?email=${encodeURIComponent(email)}`)
+    } catch {
+      setError('Network error. Please check your connection and try again.')
+    } finally {
       setLoading(false)
-      setError(json.error ?? 'Failed to send OTP. Please try again.')
-      return
     }
-
-    sessionStorage.setItem('otp_email', email)
-    router.push('/auth/verify')
   }
 
   return (

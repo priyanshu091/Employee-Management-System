@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getTodayIST } from '@/lib/utils/time'
 
 export async function GET() {
   try {
@@ -9,7 +10,7 @@ export async function GET() {
       return NextResponse.json({ data: null, error: 'Unauthorized' }, { status: 401 })
     }
 
-    const today = new Date().toISOString().split('T')[0]
+    const today = getTodayIST()
 
     const [
       { data: profile },
@@ -35,7 +36,7 @@ export async function GET() {
     const rows = todayAttendance ?? []
     const stats = {
       totalEmployees: totalEmployees ?? 0,
-      present: rows.filter((r) => r.status === 'present').length,
+      present: rows.filter((r) => r.status === 'present' || r.status === 'late').length,
       absent: Math.max((totalEmployees ?? 0) - rows.length, 0),
       late: rows.filter((r) => r.status === 'late').length,
       wfh: rows.filter((r) => r.status === 'wfh').length,

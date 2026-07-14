@@ -78,8 +78,11 @@ export async function PATCH(request: NextRequest) {
     if (check_in !== undefined) updates.check_in = check_in || null
     if (check_out !== undefined) updates.check_out = check_out || null
 
-    if (updates.check_in && updates.check_out) {
-      const ms = new Date(updates.check_out as string).getTime() - new Date(updates.check_in as string).getTime()
+    const finalCheckIn = updates.check_in ?? current.check_in
+    const finalCheckOut = updates.check_out ?? current.check_out
+
+    if (finalCheckIn && finalCheckOut) {
+      const ms = new Date(finalCheckOut as string).getTime() - new Date(finalCheckIn as string).getTime()
       updates.working_hours = Math.round((ms / 1000 / 60 / 60) * 100) / 100
     }
 

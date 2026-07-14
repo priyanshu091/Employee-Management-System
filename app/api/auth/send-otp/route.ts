@@ -51,6 +51,7 @@ export async function POST(request: NextRequest) {
       email: normalizedEmail,
       otp,
       expires: Date.now() + 10 * 60 * 1000,
+      attempts: 0,
     })
     const encoded = Buffer.from(otpData).toString('base64')
 

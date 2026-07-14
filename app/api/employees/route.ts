@@ -46,10 +46,21 @@ export async function POST(request: NextRequest) {
     const adminClient = createAdminClient()
 
     // Generate next employee ID
-    const { count } = await adminClient
+    const { data: profiles } = await adminClient
       .from('profiles')
-      .select('*', { count: 'exact', head: true })
-    const nextId = `EMP-${String((count ?? 0) + 1).padStart(3, '0')}`
+      .select('employee_id')
+      .order('created_at', { ascending: false })
+
+    const maxNum = (profiles ?? []).reduce((max, row) => {
+      const match = row.employee_id?.match(/^EMP-(\d+)$/)
+      if (match) {
+        const num = parseInt(match[1], 10)
+        return num > max ? num : max
+      }
+      return max
+    }, 0)
+
+    const nextId = `EMP-${String(maxNum + 1).padStart(3, '0')}`
 
     // Create auth user
     const { data: authUser, error: authError } = await adminClient.auth.admin.createUser({

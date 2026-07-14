@@ -39,20 +39,6 @@ export async function PATCH(
 
     if (!req) return NextResponse.json({ data: null, error: 'Request not found.' }, { status: 404 })
 
-    const { data, error } = await adminClient
-      .from('leave_requests')
-      .update({
-        status: action,
-        reviewed_by: user.id,
-        reviewed_at: new Date().toISOString(),
-        ...(action === 'rejected' && reason ? { reason: req.reason + '. Admin rejection reason: ' + reason } : {})
-      })
-      .eq('id', id)
-      .select()
-      .single()
-
-    if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
-
     if (action === 'approved') {
       const start = new Date(req.start_date)
       const end = new Date(req.end_date)
@@ -71,20 +57,58 @@ export async function PATCH(
         dates.push(dateStr)
       }
 
+      const attendanceRows = []
       for (const date of dates) {
-        const { error: mutationError } = await adminClient.from('attendance').upsert({
+        attendanceRows.push({
           employee_id: req.employee_id,
           date,
           type: 'office',
           status: 'leave',
-        }, { onConflict: 'employee_id,date' })
+          working_hours: 0,
+        })
+      }
 
-        if (mutationError) {
-          console.error('[leave review] mutation failed:', mutationError)
-          return NextResponse.json({ data: null, error: mutationError.message }, { status: 500 })
+      if (attendanceRows.length > 0) {
+        const { data: existingRows } = await adminClient
+          .from('attendance')
+          .select('date, check_in')
+          .eq('employee_id', req.employee_id)
+          .in('date', attendanceRows.map(r => r.date))
+
+        const datesWithRealAttendance = new Set(
+          (existingRows ?? [])
+            .filter(r => r.check_in !== null)
+            .map(r => r.date)
+        )
+
+        const safeRows = attendanceRows.filter(r => !datesWithRealAttendance.has(r.date))
+
+        if (safeRows.length > 0) {
+          const { error: attendanceError } = await adminClient
+            .from('attendance')
+            .upsert(safeRows, { onConflict: 'employee_id,date' })
+
+          if (attendanceError) {
+            console.error('[leave review] mutation failed:', attendanceError)
+            return NextResponse.json({ data: null, error: 'Failed to record leave attendance' }, { status: 500 })
+          }
         }
       }
     }
+
+    const { data, error } = await adminClient
+      .from('leave_requests')
+      .update({
+        status: action,
+        reviewed_by: user.id,
+        reviewed_at: new Date().toISOString(),
+        ...(action === 'rejected' && reason ? { reason: req.reason + '. Admin rejection reason: ' + reason } : {})
+      })
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
 
     const isApproved = action === 'approved'
     await createNotification({

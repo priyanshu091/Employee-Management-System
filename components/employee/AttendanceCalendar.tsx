@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils/cn'
 import type { Attendance } from '@/types'
@@ -48,6 +48,18 @@ export default function AttendanceCalendar({ size = 'compact', attendanceData = 
   const today = new Date()
   const [viewYear, setViewYear] = useState(today.getFullYear())
   const [viewMonth, setViewMonth] = useState(today.getMonth())
+  const [holidays, setHolidays] = useState<string[]>([])
+
+  useEffect(() => {
+    fetch('/api/holidays')
+      .then(res => res.json())
+      .then(json => {
+        if (json.data) {
+          setHolidays(json.data.map((h: { date: string }) => h.date))
+        }
+      })
+      .catch(err => console.error('[Calendar] Failed to fetch holidays:', err))
+  }, [])
 
   const daysInMonth = getDaysInMonth(viewYear, viewMonth)
   const firstDay = getFirstDayOfMonth(viewYear, viewMonth)
@@ -119,7 +131,9 @@ export default function AttendanceCalendar({ size = 'compact', attendanceData = 
         {cells.map((date, i) => {
           if (!date) return <div key={i} />
 
-          const day = attendanceByDate.get(toDateKey(viewYear, viewMonth, date))
+          const dateKey = toDateKey(viewYear, viewMonth, date)
+          const day = attendanceByDate.get(dateKey)
+          const isHoliday = holidays.includes(dateKey)
           const isToday = isCurrentMonth && date === today.getDate()
           const weekend = isWeekend(i)
           const hasData = !!day
@@ -144,14 +158,16 @@ export default function AttendanceCalendar({ size = 'compact', attendanceData = 
               aria-label={`${date} ${day?.status ?? ''}`}
             >
               {date}
-              {day && (
+              {isHoliday ? (
+                <span className="absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full bg-[#7C3AED]" />
+              ) : day ? (
                 <span
                   className={cn(
                     'absolute bottom-0.5 left-1/2 -translate-x-1/2 w-1 h-1 rounded-full',
                     DOT_COLORS[day.status]
                   )}
                 />
-              )}
+              ) : null}
             </button>
           )
         })}

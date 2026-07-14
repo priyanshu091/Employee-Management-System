@@ -48,6 +48,11 @@ export default function ApplyCorrectionModal({ onClose, onSubmit }: ApplyCorrect
     const errs: FormErrors = {}
     if (!form.date)           errs.date   = 'Select the date to correct.'
     if (!form.reason.trim())  errs.reason = 'Enter a reason for the correction.'
+    if (form.checkIn && form.checkOut) {
+      if (form.checkIn >= form.checkOut) {
+        errs.reason = 'Check-in time must be before check-out time.'
+      }
+    }
     setErrors(errs)
     return Object.keys(errs).length === 0
   }

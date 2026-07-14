@@ -10,7 +10,7 @@ import ApplyWFHModal from '@/components/employee/ApplyWFHModal'
 import EmptyState from '@/components/shared/EmptyState'
 import PageLoader from '@/components/shared/PageLoader'
 import { useToast } from '@/components/shared/Toast'
-import { getMyWFHRequests } from '@/lib/api/employee'
+import { getMyWFHRequests, getTodayAttendance } from '@/lib/api/employee'
 import type { WFHRequest } from '@/types'
 
 function fmtDate(d: string) {
@@ -23,6 +23,9 @@ export default function WFHPage() {
   
   const { data, isLoading: loading, mutate } = useSWR('myWFHRequests', getMyWFHRequests)
   const requests = data || []
+
+  const { data: todayAtt } = useSWR('todayAttendance', getTodayAttendance)
+  const checkedInToday = !!todayAtt?.check_in
 
   const handleSubmit = async (data: { date: string; reason: string }) => {
     const res = await fetch('/api/wfh', {
@@ -84,6 +87,7 @@ export default function WFHPage() {
         <ApplyWFHModal
           onClose={() => setShowModal(false)}
           onSubmit={handleSubmit}
+          checkedInToday={checkedInToday}
         />
       )}
     </>

@@ -1,7 +1,7 @@
 'use client'
 import { useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Html5Qrcode, Html5QrcodeResult } from 'html5-qrcode'
+import { Html5Qrcode, Html5QrcodeResult, Html5QrcodeScannerState } from 'html5-qrcode'
 import { QrCode, AlertCircle } from 'lucide-react'
 import EmployeeTopbar from '@/components/employee/EmployeeTopbar'
 
@@ -44,16 +44,21 @@ export default function ScanPage() {
     })
 
     return () => {
-      if (scannerRef.current?.isScanning) {
-        scannerRef.current.stop().catch(() => {})
-      }
+      // Cleanup: stop camera on unmount
+      scanner.getState() !== Html5QrcodeScannerState.NOT_STARTED &&
+        scanner.stop().catch((err) => {
+          console.error('[QR Scanner] Cleanup stop failed:', err)
+        })
     }
   }, [])
 
-  function handleScanSuccess(decodedText: string) {
-    // Stop scanner immediately to prevent multiple scans
-    if (scannerRef.current?.isScanning) {
-      scannerRef.current.stop().catch(() => {})
+  async function handleScanSuccess(decodedText: string) {
+    try {
+      // Stop scanner FIRST and await it fully
+      await scannerRef.current?.stop()
+    } catch (err) {
+      console.error('[QR Scanner] Failed to stop camera:', err)
+      // continue anyway — navigate even if stop fails
     }
 
     // Validate it looks like our QR URL

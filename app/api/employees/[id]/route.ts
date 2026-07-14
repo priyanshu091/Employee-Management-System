@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 const ALLOWED_FIELDS = [
   'full_name', 'phone', 'department', 'designation',
@@ -38,6 +39,15 @@ export async function PATCH(
       .maybeSingle()
 
     if (error) return NextResponse.json({ data: null, error: error.message }, { status: 500 })
+
+    if (updates.status === 'inactive') {
+      const adminClient = createAdminClient()
+      const { error: signOutError } = await adminClient.auth.admin.signOut(id)
+      if (signOutError) {
+        console.error('[Session Invalidation Error]', signOutError)
+      }
+    }
+
     return NextResponse.json({ data, error: null })
   } catch {
     return NextResponse.json({ data: null, error: 'Internal server error' }, { status: 500 })

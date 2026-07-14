@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { createServerClient } from '@supabase/ssr'
 import { createAdminClient } from '@/lib/supabase/admin'
 
@@ -24,7 +25,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    let otpData: { email: string; otp: string; expires: number }
+    let otpData: { email: string; otp: string; expires: number; attempts?: number }
     try {
       otpData = JSON.parse(Buffer.from(pendingCookie, 'base64').toString('utf-8'))
     } catch {
@@ -36,18 +37,40 @@ export async function POST(request: NextRequest) {
 
     // Check expiry
     if (Date.now() > otpData.expires) {
+      const cookieStore = await cookies()
+      cookieStore.delete('_otp_pending')
       return NextResponse.json(
         { data: null, error: 'OTP expired. Please request a new one.' },
-        { status: 400 }
+        { status: 401 }
       )
     }
 
     // Check email + OTP match
     if (otpData.email !== normalizedEmail || otpData.otp !== otp) {
-      return NextResponse.json(
-        { data: null, error: 'Incorrect OTP. Please try again.' },
-        { status: 401 }
-      )
+      const attempts = (otpData.attempts || 0) + 1
+      const cookieStore = await cookies()
+
+      if (attempts >= 5) {
+        cookieStore.delete('_otp_pending')
+        return NextResponse.json(
+          { data: null, error: 'Too many attempts. Please request a new OTP.' },
+          { status: 429 }
+        )
+      } else {
+        const newData = JSON.stringify({ ...otpData, attempts })
+        const encoded = Buffer.from(newData).toString('base64')
+        cookieStore.set('_otp_pending', encoded, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          sameSite: 'lax',
+          maxAge: Math.floor((otpData.expires - Date.now()) / 1000),
+          path: '/',
+        })
+        return NextResponse.json(
+          { data: null, error: 'Incorrect OTP. Please try again.' },
+          { status: 401 }
+        )
+      }
     }
 
     const adminClient = createAdminClient()

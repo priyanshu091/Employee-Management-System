@@ -1,9 +1,9 @@
 import type { ReportType } from '@/lib/mock/reports'
-import type { AttendanceWithProfile } from '@/types'
+import type { AttendanceWithProfile, ReportRow, DailyReportRow, MonthlyReportRow, LeaveReportRow, WFHReportRow, LateReportRow } from '@/types'
 
-export async function exportReportToExcel(type: ReportType | 'attendance', rows: any[], label: string): Promise<void> {
+export async function exportReportToExcel(type: ReportType | 'attendance', rows: ReportRow[] | AttendanceWithProfile[], label: string): Promise<void> {
   const XLSX = await import('xlsx')
-  let data: any[] = []
+  let data: Record<string, unknown>[] = []
 
   const getP = (p: any) => Array.isArray(p) ? p[0] : p
 
@@ -26,7 +26,7 @@ export async function exportReportToExcel(type: ReportType | 'attendance', rows:
     switch (type) {
       case 'daily':
       case 'employee':
-        data = rows.map(r => ({
+        data = (rows as DailyReportRow[]).map(r => ({
           'Employee Name': r.employee_name || '—',
           'Employee ID': r.employee_id || '—',
           'Department': r.department || '—',
@@ -38,7 +38,7 @@ export async function exportReportToExcel(type: ReportType | 'attendance', rows:
         }))
         break
       case 'monthly':
-        data = rows.map(r => ({
+        data = (rows as MonthlyReportRow[]).map(r => ({
           'Employee Name': r.employee_name || '—',
           'Employee ID': r.employee_id || '—',
           'Department': r.department || '—',
@@ -50,7 +50,7 @@ export async function exportReportToExcel(type: ReportType | 'attendance', rows:
         }))
         break
       case 'leave':
-        data = rows.map(r => ({
+        data = (rows as LeaveReportRow[]).map(r => ({
           'Employee Name': r.employee_name || '—',
           'Employee ID': r.employee_id || '—',
           'Leave Type': r.leave_type || '—',
@@ -61,7 +61,7 @@ export async function exportReportToExcel(type: ReportType | 'attendance', rows:
         }))
         break
       case 'wfh':
-        data = rows.map(r => ({
+        data = (rows as WFHReportRow[]).map(r => ({
           'Employee Name': r.employee_name || '—',
           'Employee ID': r.employee_id || '—',
           'Date': r.date || '—',
@@ -70,7 +70,7 @@ export async function exportReportToExcel(type: ReportType | 'attendance', rows:
         }))
         break
       case 'late':
-        data = rows.map(r => ({
+        data = (rows as LateReportRow[]).map(r => ({
           'Employee Name': r.employee_name || '—',
           'Employee ID': r.employee_id || '—',
           'Department': r.department || '—',

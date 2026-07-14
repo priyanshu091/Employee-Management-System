@@ -7,18 +7,17 @@ import { useToast } from '@/components/shared/Toast'
 import { type ReportType } from '@/lib/mock/reports'
 import { exportReportToPDF } from '@/lib/export/pdf'
 import { exportReportToExcel } from '@/lib/export/excel'
+import type { ReportRow, DailyReportRow, MonthlyReportRow, LeaveReportRow, WFHReportRow, LateReportRow } from '@/types'
 
 interface ReportPreviewProps {
   type: ReportType | null
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  rows: any[]
+  rows: ReportRow[]
   label: string
   generated: boolean
 }
 
 // ── Daily / Employee table ────────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function DailyTable({ rows }: { rows: any[] }) {
+function DailyTable({ rows }: { rows: DailyReportRow[] }) {
   return (
     <table className="w-full min-w-[600px]">
       <thead>
@@ -57,8 +56,7 @@ function DailyTable({ rows }: { rows: any[] }) {
 }
 
 // ── Monthly table ─────────────────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function MonthlyTable({ rows }: { rows: any[] }) {
+function MonthlyTable({ rows }: { rows: MonthlyReportRow[] }) {
   return (
     <table className="w-full min-w-[600px]">
       <thead>
@@ -98,8 +96,7 @@ function MonthlyTable({ rows }: { rows: any[] }) {
 }
 
 // ── Leave table ───────────────────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function LeaveTable({ rows }: { rows: any[] }) {
+function LeaveTable({ rows }: { rows: LeaveReportRow[] }) {
   return (
     <table className="w-full min-w-[580px]">
       <thead>
@@ -135,8 +132,7 @@ function LeaveTable({ rows }: { rows: any[] }) {
 }
 
 // ── WFH table ─────────────────────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function WFHTable({ rows }: { rows: any[] }) {
+function WFHTable({ rows }: { rows: WFHReportRow[] }) {
   return (
     <table className="w-full min-w-[500px]">
       <thead>
@@ -170,8 +166,7 @@ function WFHTable({ rows }: { rows: any[] }) {
 }
 
 // ── Late table ────────────────────────────────────────────────────────────────
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function LateTable({ rows }: { rows: any[] }) {
+function LateTable({ rows }: { rows: LateReportRow[] }) {
   return (
     <table className="w-full min-w-[560px]">
       <thead>
@@ -276,11 +271,11 @@ export default function ReportPreview({ type, rows, label, generated }: ReportPr
 
       {/* Table */}
       <div className="overflow-x-auto">
-        {(type === 'daily' || type === 'employee') && <DailyTable rows={rows} />}
-        {type === 'monthly' && <MonthlyTable rows={rows} />}
-        {type === 'leave' && <LeaveTable rows={rows} />}
-        {type === 'wfh' && <WFHTable rows={rows} />}
-        {type === 'late' && <LateTable rows={rows} />}
+        {(type === 'daily' || type === 'employee') && <DailyTable rows={rows as DailyReportRow[]} />}
+        {type === 'monthly' && <MonthlyTable rows={rows as MonthlyReportRow[]} />}
+        {type === 'leave' && <LeaveTable rows={rows as LeaveReportRow[]} />}
+        {type === 'wfh' && <WFHTable rows={rows as WFHReportRow[]} />}
+        {type === 'late' && <LateTable rows={rows as LateReportRow[]} />}
       </div>
     </div>
   )

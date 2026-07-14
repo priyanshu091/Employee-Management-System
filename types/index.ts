@@ -165,3 +165,56 @@ export interface AuditLogWithProfiles extends AuditLog {
   affected: Pick<Profile, 'full_name' | 'employee_id'>
   changer: Pick<Profile, 'full_name'>
 }
+
+// ── Report Types ────────────────────────────────────────────────────────────
+
+export interface DailyReportRow {
+  employee_name: string
+  employee_id: string
+  department?: string
+  date: string
+  check_in: string | null
+  check_out: string | null
+  working_hours: number | string | null
+  status: AttendanceStatus
+}
+
+export interface MonthlyReportRow {
+  employee_name: string
+  employee_id: string
+  department: string
+  present_days: number
+  late_days: number
+  wfh_days: number
+  leave_days: number
+  total_working_hours: number | string | null
+}
+
+export interface LeaveReportRow {
+  employee_name: string
+  employee_id: string
+  leave_type: string
+  start_date: string
+  end_date: string
+  days: number
+  status: RequestStatus
+}
+
+export interface WFHReportRow {
+  employee_name: string
+  employee_id: string
+  date: string
+  reason: string
+  status: RequestStatus
+}
+
+export interface LateReportRow {
+  employee_name: string
+  employee_id: string
+  department: string
+  date: string
+  check_in: string
+  late_reason: string | null
+}
+
+export type ReportRow = DailyReportRow | MonthlyReportRow | LeaveReportRow | WFHReportRow | LateReportRow

@@ -1,7 +1,7 @@
 import type { ReportType } from '@/lib/mock/reports'
+import type { ReportRow, DailyReportRow, MonthlyReportRow, LeaveReportRow, WFHReportRow, LateReportRow } from '@/types'
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-export async function exportReportToPDF(type: ReportType, rows: any[], label: string): Promise<void> {
+export async function exportReportToPDF(type: ReportType, rows: ReportRow[], label: string): Promise<void> {
   const jsPDF = (await import('jspdf')).default
   const autoTable = (await import('jspdf-autotable')).default
   const doc = new jsPDF()
@@ -14,13 +14,13 @@ export async function exportReportToPDF(type: ReportType, rows: any[], label: st
   doc.text(label, 14, 30)
 
   let head: string[][] = []
-  let body: any[][] = []
+  let body: string[][] = []
 
   switch (type) {
     case 'daily':
     case 'employee':
       head = [['Employee', 'Date', 'Check In', 'Check Out', 'Hours', 'Status']]
-      body = rows.map(r => [
+      body = (rows as DailyReportRow[]).map(r => [
         r.employee_name || '—',
         r.date || '—',
         r.check_in || '—',
@@ -31,7 +31,7 @@ export async function exportReportToPDF(type: ReportType, rows: any[], label: st
       break
     case 'monthly':
       head = [['Employee', 'Present', 'Late', 'WFH', 'Leave', 'Total Hours']]
-      body = rows.map(r => [
+      body = (rows as MonthlyReportRow[]).map(r => [
         r.employee_name || '—',
         r.present_days?.toString() || '0',
         r.late_days?.toString() || '0',
@@ -42,7 +42,7 @@ export async function exportReportToPDF(type: ReportType, rows: any[], label: st
       break
     case 'leave':
       head = [['Employee', 'Leave Type', 'Start Date', 'End Date', 'Days', 'Status']]
-      body = rows.map(r => [
+      body = (rows as LeaveReportRow[]).map(r => [
         r.employee_name || '—',
         r.leave_type || '—',
         r.start_date || '—',
@@ -53,7 +53,7 @@ export async function exportReportToPDF(type: ReportType, rows: any[], label: st
       break
     case 'wfh':
       head = [['Employee', 'Date', 'Reason', 'Status']]
-      body = rows.map(r => [
+      body = (rows as WFHReportRow[]).map(r => [
         r.employee_name || '—',
         r.date || '—',
         r.reason || '—',
@@ -62,7 +62,7 @@ export async function exportReportToPDF(type: ReportType, rows: any[], label: st
       break
     case 'late':
       head = [['Employee', 'Department', 'Date', 'Check In', 'Reason']]
-      body = rows.map(r => [
+      body = (rows as LateReportRow[]).map(r => [
         r.employee_name || '—',
         r.department || '—',
         r.date || '—',

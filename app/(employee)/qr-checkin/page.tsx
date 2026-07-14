@@ -45,20 +45,11 @@ function QRCheckinInner() {
       }
 
       try {
-        const position = await new Promise<GeolocationPosition>((resolve, reject) => {
-          navigator.geolocation.getCurrentPosition(resolve, reject, {
-            timeout: 10000,
-            enableHighAccuracy: true,
-          })
-        })
-
         const validateRes = await fetch('/api/qr/validate', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             token,
-            lat: position.coords.latitude,
-            lng: position.coords.longitude
           }),
         })
         
@@ -78,24 +69,16 @@ function QRCheckinInner() {
         const action = validateData.data?.action
         
         if (action === 'checkin') {
-          setSuccessType('checkin')
-          setPageState('success')
-          setTimeout(() => router.push('/dashboard'), 3000)
+          setPageState('checkin')
         } else if (action === 'checkout') {
-          setSuccessType('checkout')
-          setPageState('success')
-          setTimeout(() => router.push('/dashboard'), 3000)
+          setPageState('checkout')
         } else {
            setPageState('error')
            setErrorMsg('Unexpected response from server.')
         }
       } catch (err) {
         setPageState('error')
-        if (err instanceof GeolocationPositionError) {
-          setErrorMsg('Location access required for QR check-in.')
-        } else {
-          setErrorMsg('Network error. Please try again.')
-        }
+        setErrorMsg('Network error. Please try again.')
       }
     }
 
@@ -116,7 +99,6 @@ function QRCheckinInner() {
         const settingsData = await settingsRes.json()
         const settings = settingsData.data
 
-        // Step 2: get user GPS
         const position = await new Promise<GeolocationPosition>((resolve, reject) => {
           navigator.geolocation.getCurrentPosition(resolve, reject, {
             timeout: 10000,
@@ -140,22 +122,38 @@ function QRCheckinInner() {
           setGpsStatus('idle')
           return
         }
-      }
 
-      // Step 4: check in
-      const res = await fetch('/api/attendance/checkin', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: selectedType }),
-      })
-      const data = await res.json()
+        // Step 4: check in for office
+        const res = await fetch('/api/attendance/checkin', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ type: 'office', lat: position.coords.latitude, lng: position.coords.longitude }),
+        })
+        const data = await res.json()
 
-      if (data.error) {
-        setActionError(data.error)
-      } else {
-        setSuccessType('checkin')
-        setPageState('success')
-        setTimeout(() => router.push('/dashboard'), 3000)
+        if (data.error) {
+          setActionError(data.error)
+        } else {
+          setSuccessType('checkin')
+          setPageState('success')
+          setTimeout(() => router.push('/dashboard'), 3000)
+        }
+      } else if (selectedType === 'wfh') {
+        const { getTodayIST } = await import('@/lib/utils/time')
+        const res = await fetch('/api/wfh', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date: getTodayIST(), reason: 'WFH request from QR check-in' }),
+        })
+        const data = await res.json()
+        
+        if (data.error) {
+          setActionError(data.error)
+        } else {
+          setSuccessType('checkin')
+          setPageState('success')
+          setTimeout(() => router.push('/dashboard'), 3000)
+        }
       }
     } catch (err) {
       setActionError('Something went wrong. Please try again.')

@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
     let status: 'present' | 'late' | 'wfh' = type === 'wfh' ? 'wfh' : 'present'
 
     if (type === 'office' && settings) {
-      const late = isLate(now, settings.office_start_time, settings.grace_period_minutes)
+      const late = isLate(new Date(), settings.office_start_time, settings.grace_period_minutes)
       if (late) status = 'late'
     }
 
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
       .insert({
         employee_id: profile.id,
         date: today,
-        check_in: now.toISOString(),
+        check_in: new Date().toISOString(),
         type,
         status,
         late_reason: late_reason || null,

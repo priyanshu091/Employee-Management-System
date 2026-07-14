@@ -56,7 +56,12 @@ function LoginForm() {
       }
 
       sessionStorage.setItem('otp_email', email)
-      router.push(`/auth/verify?email=${encodeURIComponent(email)}`)
+      const redirectParam = searchParams.get('redirect')
+      let verifyUrl = `/auth/verify?email=${encodeURIComponent(email)}`
+      if (redirectParam) {
+        verifyUrl += `&redirect=${encodeURIComponent(redirectParam)}`
+      }
+      router.push(verifyUrl)
     } catch {
       setError('Network error. Please check your connection and try again.')
     } finally {

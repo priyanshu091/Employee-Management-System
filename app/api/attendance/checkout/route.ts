@@ -57,6 +57,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    if (!existing.check_in) {
+      return NextResponse.json(
+        { data: null, error: `Cannot check out. Your current status is: ${existing.status}` },
+        { status: 400 }
+      )
+    }
+
     // 8. Calculate working hours
     const checkOutTime = new Date()
     const checkInTime = new Date(existing.check_in)

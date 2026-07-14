@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getTodayIST } from '@/lib/utils/time'
 
 export async function GET(request: NextRequest) {
   try {
@@ -73,6 +74,21 @@ export async function POST(request: NextRequest) {
 
     if (!date || !reason?.trim()) {
       return NextResponse.json({ data: null, error: 'Date and reason are required.' }, { status: 400 })
+    }
+
+    if (!requested_check_in && !requested_check_out) {
+      return NextResponse.json(
+        { data: null, error: 'At least one of check-in or check-out time must be provided.' },
+        { status: 400 }
+      )
+    }
+
+    const todayIST = getTodayIST()
+    if (date > todayIST) {
+      return NextResponse.json(
+        { data: null, error: 'Cannot submit a correction request for a future date.' },
+        { status: 400 }
+      )
     }
 
     const { data, error: insertError } = await supabase

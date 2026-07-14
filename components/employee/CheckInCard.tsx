@@ -36,6 +36,9 @@ export default function CheckInCard({ onCheckInSuccess, onCheckOutSuccess }: Che
     getTodayAttendance().then((att) => {
       if (!att) {
         setCardState('idle')
+      } else if (att.status === 'wfh' || att.status === 'leave') {
+        setRecord(att)
+        setCardState('done')
       } else if (att.check_out) {
         setRecord(att)
         setCardState('done')
@@ -195,16 +198,26 @@ export default function CheckInCard({ onCheckInSuccess, onCheckOutSuccess }: Che
         )}
 
         {/* DONE */}
-        {cardState === 'done' && record?.check_in && record?.check_out && (
+        {cardState === 'done' && record && (
           <>
             <div>
-              <p className="text-[12px] font-medium text-[#16A34A] mb-1">Day complete</p>
-              <p className="text-[18px] font-semibold text-[#111827]">
-                {record.working_hours != null ? formatWorkingHours(Number(record.working_hours)) : '—'} total
+              <p className="text-[12px] font-medium text-[#16A34A] mb-1">
+                {record.status === 'wfh' ? 'Working from home' : record.status === 'leave' ? 'On Leave' : 'Day complete'}
               </p>
-              <p className="text-[12px] text-[#6B7280] mt-0.5">
-                {formatTime(new Date(record.check_in))} – {formatTime(new Date(record.check_out))}
-              </p>
+              {record.status === 'wfh' || record.status === 'leave' ? (
+                <p className="text-[18px] font-semibold text-[#111827]">
+                  {record.status === 'wfh' ? 'WFH Approved' : 'Leave Approved'}
+                </p>
+              ) : (
+                <>
+                  <p className="text-[18px] font-semibold text-[#111827]">
+                    {record.working_hours != null ? formatWorkingHours(Number(record.working_hours)) : '—'} total
+                  </p>
+                  <p className="text-[12px] text-[#6B7280] mt-0.5">
+                    {record.check_in ? formatTime(new Date(record.check_in)) : '—'} – {record.check_out ? formatTime(new Date(record.check_out)) : '—'}
+                  </p>
+                </>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <StatusBadge variant={record.status} />

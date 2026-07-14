@@ -54,11 +54,12 @@ export default function ScanPage() {
 
   async function handleScanSuccess(decodedText: string) {
     try {
-      // Stop scanner FIRST and await it fully
-      await scannerRef.current?.stop()
+      // Fire-and-forget stop camera so it doesn't block router.push on slow devices
+      scannerRef.current?.stop().catch((err) => {
+        console.error('[QR Scanner] Failed to stop camera:', err)
+      })
     } catch (err) {
-      console.error('[QR Scanner] Failed to stop camera:', err)
-      // continue anyway — navigate even if stop fails
+      console.error('[QR Scanner] Sync error stopping camera:', err)
     }
 
     // Validate it looks like our QR URL

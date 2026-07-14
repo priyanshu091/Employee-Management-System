@@ -580,3 +580,17 @@ The user pasted a Supabase DB password, a "publishable key," and (in a follow-up
 ## Real-Time Notifications Implementation
 
 - [x] `components/employee/UnreadProvider.tsx` — Transformed the static SWR unread provider into a fully reactive Supabase Realtime channel client. Orchestrated a two-stage `useEffect` hook payload: first querying the authentication module for the active UUID, then opening a dynamic WebSocket pipeline (`notifications-${userId}`). Programmed the listener to intercept both Postgres `INSERT` and `UPDATE` schemas bound specifically to that user. When triggered (e.g. admin approves request or user marks-as-read on mobile), the hook instantly instructs SWR to `mutate()` natively, forcing a silent re-fetch across the entire DOM tree and achieving sub-second badge synchronization across all active desktop/mobile tabs.
+
+## Phase 4 Bug Fixes
+- Fixed critical timezone data corruption in QR and GPS check-ins where shifted IST dates were serialized to UTC in Supabase.
+- Fixed proxy intercept allowing logged-in users to get trapped on the login page via root or PWA startup urls.
+- Fixed lost redirect parameters during the OTP login flow so deep links like QR scans work seamlessly after auth.
+- Fixed camera resource leaks in the QR scanner that occasionally blocked routing to validation.
+- Replaced disruptive browser alerts with in-app toasts for PWA installation prompts on iOS.
+
+- Added strong employee-side validations to correction requests to block future dates and empty check-in/out payloads.
+- Added date validations to WFH requests to prevent submission for past dates (Correction flows should be used instead).
+
+- Fixed major edge case where WFH or Leave employees checking out via API/QR would calculate 4.9M working hours due to missing check-in timestamps. Added guards in both UI and API to correctly display and enforce WFH/Leave statuses instead of a 'Check Out' flow.
+
+- Fixed major double-timezone-shift bugs in both QR and GPS Check-in routes where employees would always be incorrectly marked 'late' and granted an extra 5.5 hours of working time due to mixed UTC/IST Date object comparisons.

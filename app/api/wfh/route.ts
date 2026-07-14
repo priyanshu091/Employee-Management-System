@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
+import { getTodayIST } from '@/lib/utils/time'
 
 export async function GET(request: NextRequest) {
   try {
@@ -73,6 +74,14 @@ export async function POST(request: NextRequest) {
 
     if (!date || !reason?.trim()) {
       return NextResponse.json({ data: null, error: 'Date and reason are required.' }, { status: 400 })
+    }
+
+    const todayIST = getTodayIST()
+    if (date < todayIST) {
+      return NextResponse.json(
+        { data: null, error: 'WFH cannot be requested for past dates. Please use a correction request.' },
+        { status: 400 }
+      )
     }
 
     const { data: existingRequest } = await supabase

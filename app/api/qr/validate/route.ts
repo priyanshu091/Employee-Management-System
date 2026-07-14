@@ -88,14 +88,14 @@ export async function POST(request: NextRequest) {
 
       let status: 'present' | 'late' = 'present'
       if (settings) {
-        const late = isLate(now, settings.office_start_time, settings.grace_period_minutes)
+        const late = isLate(new Date(), settings.office_start_time, settings.grace_period_minutes)
         if (late) status = 'late'
       }
 
       const { error: insertError } = await supabase.from('attendance').insert({
         employee_id: profile.id,
         date: today,
-        check_in: now.toISOString(),
+        check_in: new Date().toISOString(),
         type: 'office',
         status,
       })
@@ -106,12 +106,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ data: { action: 'checkin', status }, error: null }, { status: 200 })
     } else {
       // CHECK-OUT
+      if (!existing.check_in) {
+        return NextResponse.json({ data: null, error: `Cannot check out. Your current status is: ${existing.status}` }, { status: 400 })
+      }
+      const checkOutTime = new Date() // standard UTC to compare with check_in
       const checkInTime = new Date(existing.check_in)
-      const workingHours = Math.round(((now.getTime() - checkInTime.getTime()) / 1000 / 60 / 60) * 100) / 100
+      const workingHours = Math.round(((checkOutTime.getTime() - checkInTime.getTime()) / 1000 / 60 / 60) * 100) / 100
 
       const adminClient = createAdminClient()
       const { error: updateError } = await adminClient.from('attendance').update({
-        check_out: now.toISOString(),
+        check_out: new Date().toISOString(),
         working_hours: workingHours,
         updated_at: new Date().toISOString(),
       }).eq('id', existing.id)

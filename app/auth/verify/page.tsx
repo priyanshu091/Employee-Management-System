@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback, FormEvent } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect, useCallback, FormEvent, Suspense } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { ArrowLeft, CheckCircle } from 'lucide-react'
 import OTPInput from '@/components/auth/OTPInput'
 
@@ -15,8 +15,11 @@ function Spinner({ color = 'white' }: { color?: string }) {
   )
 }
 
-export default function VerifyPage() {
+function VerifyForm() {
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const redirectParam = searchParams.get('redirect')
+  
   const [email, setEmail] = useState('')
   const [otp, setOtp] = useState<string[]>(Array(6).fill(''))
   const [loading, setLoading] = useState(false)
@@ -28,7 +31,7 @@ export default function VerifyPage() {
   const [canResend, setCanResend] = useState(false)
 
   const [step, setStep] = useState<'otp' | 'remember-me'>('otp')
-  const [redirectTo, setRedirectTo] = useState('/dashboard')
+  const [redirectTo, setRedirectTo] = useState(redirectParam || '/dashboard')
 
   useEffect(() => {
     const stored = sessionStorage.getItem('otp_email')
@@ -291,3 +294,4 @@ export default function VerifyPage() {
     </main>
   )
 }
+export default function VerifyPage() { return <Suspense fallback={<Spinner color="#4F46E5" />}><VerifyForm /></Suspense> }

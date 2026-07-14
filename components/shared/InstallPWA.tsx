@@ -2,8 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { Download } from 'lucide-react'
+import { useToast } from '@/components/shared/Toast'
 
 export default function InstallPWA() {
+  const { showToast } = useToast()
   const [isIOS, setIsIOS] = useState(false)
   const [isStandalone, setIsStandalone] = useState(false)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null)
@@ -46,9 +48,11 @@ export default function InstallPWA() {
       })
     } else {
       // If we don't have the native prompt, show a manual hint
-      alert(isIOS 
-        ? "To install this app on your iPhone: tap the Share icon at the bottom of Safari, then select 'Add to Home Screen'."
-        : "To install this app, open your browser menu (⋮) and select 'Install App' or 'Add to Home screen'.")
+      if (isIOS) {
+        showToast("To install on iPhone: tap the Share icon at the bottom of Safari, then select 'Add to Home Screen'.")
+      } else {
+        showToast("To install this app, open your browser menu (⋮) and select 'Install App' or 'Add to Home screen'.")
+      }
     }
   }
 

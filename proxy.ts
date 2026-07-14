@@ -7,16 +7,6 @@ export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl
   const response = NextResponse.next({ request })
 
-  // Always allow public auth paths
-  if (PUBLIC_PATHS.some((p) => pathname.startsWith(p))) {
-    return response
-  }
-
-  // Allow API routes to handle their own auth
-  if (pathname.startsWith('/api/')) {
-    return response
-  }
-
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -37,6 +27,20 @@ export async function proxy(request: NextRequest) {
 
   // Refresh session
   const { data: { user } } = await supabase.auth.getUser()
+
+  const isPublicAuthPath = PUBLIC_PATHS.some((p) => pathname.startsWith(p))
+
+  if (isPublicAuthPath) {
+    if (user) {
+      return NextResponse.redirect(new URL('/dashboard', request.url))
+    }
+    return response
+  }
+
+  // Allow API routes to handle their own auth
+  if (pathname.startsWith('/api/')) {
+    return response
+  }
 
   // Not authenticated — redirect to login
   if (!user) {

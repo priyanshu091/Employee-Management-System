@@ -32,5 +32,13 @@
       "type": "image/png",
       "purpose": "maskable"
     }
+  ],
+  "shortcuts": [
+    {
+      "name": "Scan QR",
+      "short_name": "Scan QR",
+      "description": "Scan the office QR code to check in",
+      "url": "/scan"
+    }
   ]
 }

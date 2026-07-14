@@ -1,4 +1,5 @@
 import { UserPlus, BarChart2, CalendarPlus } from 'lucide-react'
+import Link from 'next/link'
 import AdminTopbar from '@/components/admin/AdminTopbar'
 import StatCard from '@/components/admin/StatCard'
 import PendingRequestsPanel from '@/components/admin/PendingRequestsPanel'
@@ -64,13 +65,13 @@ export default async function AdminDashboardPage() {
       <AdminTopbar
         title="Dashboard"
         action={
-          <a
+          <Link
             href="/admin/employees"
             className="flex items-center gap-1.5 bg-[#4F46E5] hover:bg-[#4338CA] text-white px-4 py-2 rounded-lg text-[13px] font-medium transition-colors duration-150"
           >
             <UserPlus size={15} strokeWidth={2} />
             Add employee
-          </a>
+          </Link>
         }
       />
 

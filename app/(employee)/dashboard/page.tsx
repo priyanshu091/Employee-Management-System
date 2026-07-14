@@ -1,4 +1,5 @@
 import { Umbrella, Home } from 'lucide-react'
+import Link from 'next/link'
 import EmployeeTopbar from '@/components/employee/EmployeeTopbar'
 import CheckInCard from '@/components/employee/CheckInCard'
 import AttendanceCalendar from '@/components/employee/AttendanceCalendar'
@@ -98,7 +99,7 @@ export default async function DashboardPage() {
           <div className="bg-white border border-[#E5E7EB] rounded-xl p-4">
             <div className="flex items-center justify-between mb-3">
               <h2 className="text-[13px] font-medium text-[#111827]">My requests</h2>
-              <a href="/leave" className="text-[12px] text-[#4F46E5] hover:underline">See all →</a>
+              <Link href="/leave" className="text-[12px] text-[#4F46E5] hover:underline">See all →</Link>
             </div>
             {recentRequests.length === 0 ? (
               <p className="text-[13px] text-[#6B7280] text-center py-8">No requests yet.</p>

@@ -66,7 +66,7 @@ export async function POST(request: NextRequest) {
       if (!existing.check_in) {
         return NextResponse.json({ data: null, error: `Cannot check out. Your current status is: ${existing.status}` }, { status: 400 })
       }
-      return NextResponse.json({ data: { action: 'checkout', status: existing.status }, error: null }, { status: 200 })
+      return NextResponse.json({ data: { action: 'checkout', status: existing.status, record: existing }, error: null }, { status: 200 })
     }
   } catch (err) {
     console.error('[API Error]', err)

@@ -71,6 +71,7 @@ function QRCheckinInner() {
         if (action === 'checkin') {
           setPageState('checkin')
         } else if (action === 'checkout') {
+          setTodayRecord(validateData.data.record)
           setPageState('checkout')
         } else {
            setPageState('error')

@@ -12,7 +12,7 @@ interface WhoIsInOfficeProps {
 }
 
 function formatSince(iso: string): string {
-  return `Since ${new Date(iso).toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}`
+  return `Since ${new Date(iso).toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true })}`
 }
 
 export default function WhoIsInOffice({ rows, loading }: WhoIsInOfficeProps) {

@@ -50,6 +50,7 @@ export function isLate(
 
 export function formatTime(date: Date): string {
   return date.toLocaleTimeString('en-IN', {
+    timeZone: 'Asia/Kolkata',
     hour: '2-digit',
     minute: '2-digit',
     hour12: true,
@@ -58,6 +59,7 @@ export function formatTime(date: Date): string {
 
 export function formatDate(date: Date): string {
   return date.toLocaleDateString('en-IN', {
+    timeZone: 'Asia/Kolkata',
     weekday: 'long',
     day: 'numeric',
     month: 'short',

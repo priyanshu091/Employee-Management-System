@@ -94,7 +94,7 @@ function VerifyForm() {
       }
 
       // Success - move to remember-me step
-      setRedirectTo(json.data.redirectTo ?? '/dashboard')
+      setRedirectTo(redirectParam || json.data.redirectTo || '/dashboard')
       setStep('remember-me')
       sessionStorage.removeItem('otp_email')
     } catch {

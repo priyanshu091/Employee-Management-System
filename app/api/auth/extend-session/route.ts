@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     if (rememberMe) {
       // Extend maxAge to 30 days for Supabase auth cookies
       for (const cookie of allCookies) {
-        if (cookie.name.startsWith('sb-') && cookie.name.endsWith('-auth-token')) {
+        if (cookie.name.startsWith('sb-') && cookie.name.includes('-auth-token')) {
           response.cookies.set(cookie.name, cookie.value, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',

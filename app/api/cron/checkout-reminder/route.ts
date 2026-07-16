@@ -30,21 +30,16 @@ export async function GET(request: NextRequest) {
     const { hours, minutes } = getCurrentISTTime()
     const currentMinutes = hours * 60 + minutes
 
-    // 4. Calculate office end time in minutes + auto-checkout time
+    // 4. Calculate office end time in minutes
     const officeEndMinutes = timeToMinutes(settings.office_end_time)
-    const autoCheckoutMinutes = officeEndMinutes + (4 * 60) // 4 hours after office end
 
-    // 5. Check which window we are in (30-minute windows)
-    const inReminderWindow =
+    // 5. Check which window we are in (30-minute window)
+    const inAutoCheckoutWindow =
       currentMinutes >= officeEndMinutes &&
       currentMinutes < officeEndMinutes + 30
 
-    const inAutoCheckoutWindow =
-      currentMinutes >= autoCheckoutMinutes &&
-      currentMinutes < autoCheckoutMinutes + 30
-
-    // 6. If neither window — exit early, do nothing
-    if (!inReminderWindow && !inAutoCheckoutWindow) {
+    // 6. If not in window — exit early, do nothing
+    if (!inAutoCheckoutWindow) {
       return NextResponse.json({
         message: 'No action needed at this time',
         currentIST: `${hours}:${String(minutes).padStart(2, '0')}`,
@@ -82,48 +77,11 @@ export async function GET(request: NextRequest) {
     if (!uncheckedRows || uncheckedRows.length === 0) {
       return NextResponse.json({
         message: 'All employees have checked out',
-        action: inReminderWindow ? 'reminder' : 'auto-checkout',
+        action: 'auto-checkout',
       })
     }
 
-    // 9. Handle REMINDER window
-    if (inReminderWindow) {
-      let reminded = 0
-      for (const row of uncheckedRows) {
-        const profile = Array.isArray(row.profile) ? row.profile[0] : row.profile
-        if (!profile?.id) continue
-
-        // Create in-app notification
-        await createNotification({
-          userId: profile.id,
-          title: 'Reminder: Please check out',
-          message: `Office hours are over. Don't forget to check out before you leave.`,
-          type: 'reminder',
-        })
-
-        // Send email
-        if (profile.email) {
-          try {
-            await sendNotificationEmail(
-              profile.email,
-              'Reminder: Please check out',
-              'Reminder: Please check out',
-              `Hi ${profile.full_name}, office hours are over. Please remember to check out from the attendance system before you leave.`
-            )
-          } catch (emailErr) {
-            console.error(`[cron] Failed to send reminder email to ${profile.email}:`, emailErr)
-            // Don't throw — continue with other employees
-          }
-        }
-        reminded++
-      }
-
-      return NextResponse.json({
-        message: `Reminder sent to ${reminded} employee(s)`,
-        action: 'reminder',
-        count: reminded,
-      })
-    }
+    // Removed reminder window — jumping straight to auto-checkout.
 
     // 10. Handle AUTO-CHECKOUT window
     if (inAutoCheckoutWindow) {
@@ -161,7 +119,7 @@ export async function GET(request: NextRequest) {
         await createNotification({
           userId: profile.id,
           title: 'You were automatically checked out',
-          message: `You forgot to check out. You have been automatically checked out at ${autoCheckoutTime.toLocaleTimeString('en-IN', { hour: '2-digit', minute: '2-digit', hour12: true })}. Your working hours: ${workingHours}h. If this is incorrect, please submit a correction request.`,
+          message: `You forgot to check out. You have been automatically checked out at ${autoCheckoutTime.toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true })}. Your working hours: ${workingHours}h. If this is incorrect, please submit a correction request.`,
           type: 'reminder',
         })
 

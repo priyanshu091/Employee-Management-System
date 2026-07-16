@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@/lib/supabase/server'
 import { isLate, getTodayIST, getNowIST } from '@/lib/utils/time'
 import { haversineKm } from '@/lib/utils/geo'
+import { sendNotificationEmail } from '@/lib/email/send-notification'
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +15,7 @@ export async function POST(request: NextRequest) {
 
     const { data: profile, error: profileError } = await supabase
       .from('profiles')
-      .select('id, role')
+      .select('id, role, full_name')
       .eq('id', user.id)
       .maybeSingle()
 
@@ -126,6 +127,28 @@ export async function POST(request: NextRequest) {
         { data: null, error: 'Failed to create attendance record.' },
         { status: 500 }
       )
+    }
+
+    // Send email to admin
+    try {
+      const { data: admin } = await supabase
+        .from('profiles')
+        .select('email')
+        .eq('role', 'admin')
+        .limit(1)
+        .single()
+        
+      if (admin?.email) {
+        const checkInTimeStr = new Date().toLocaleTimeString('en-IN', { timeZone: 'Asia/Kolkata', hour: '2-digit', minute: '2-digit', hour12: true })
+        await sendNotificationEmail(
+          admin.email,
+          `Check-in Alert: ${profile.full_name}`,
+          'Employee Check-in',
+          `Employee ${profile.full_name} checked in at ${checkInTimeStr}.`
+        )
+      }
+    } catch (emailErr) {
+      console.error('[POST /api/attendance/checkin] Failed to send admin email:', emailErr)
     }
 
     return NextResponse.json({ data, error: null }, { status: 201 })

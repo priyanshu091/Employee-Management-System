@@ -64,6 +64,7 @@ export async function GET(request: NextRequest) {
       .from('profiles')
       .select('id, full_name, email')
       .eq('role', 'employee')
+      .eq('status', 'active')
 
     if (empError || !employees) {
       return NextResponse.json({ error: 'Failed to fetch employees' }, { status: 500 })
@@ -138,6 +139,30 @@ export async function GET(request: NextRequest) {
         } catch (emailErr) {
           console.error(`[cron] Failed to send absent email to ${emp.email}:`, emailErr)
         }
+      }
+    }
+
+    // 10. Send summary email to admin
+    if (markedAbsent > 0) {
+      try {
+        const { data: admin } = await adminClient
+          .from('profiles')
+          .select('email')
+          .eq('role', 'admin')
+          .limit(1)
+          .single()
+
+        if (admin?.email) {
+          const namesList = absentEmployees.map(e => `- ${e.full_name}`).join('<br>')
+          await sendNotificationEmail(
+            admin.email,
+            `Absentee Summary: ${markedAbsent} employee(s) marked absent`,
+            'Daily Absentee Summary',
+            `The attendance lock time (${settings.attendance_lock_time}) has passed. The following ${markedAbsent} employee(s) have been automatically marked absent today:<br><br>${namesList}`
+          )
+        }
+      } catch (adminEmailErr) {
+        console.error('[cron] Failed to send absentee summary to admin:', adminEmailErr)
       }
     }
 
